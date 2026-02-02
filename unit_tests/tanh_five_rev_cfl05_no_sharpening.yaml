@@ -1,0 +1,36 @@
+# Validation: CFL=0.5, 5 revolutions, periodic BC, no sharpening
+# 1D cell-centered: dx = L/n = 0.01. CFL = u*dt/dx = 0.5 => dt = 0.01.
+
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points: 100   # dx = 0.01
+
+time:
+  dt: 0.01         # CFL = 0.5*0.01/0.01 = 0.5
+  n_steps: 1000    # 5 revolutions = 10 s
+
+velocity: [0.5]
+
+fields:
+  - name: alpha
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary:
+      type: periodic
+
+solver:
+  type: upwind
+
+timestepper:
+  type: euler
+
+# No sharpening
+
+output:
+  directory: unit_tests/tanh_five_rev_cfl05_no_sharpening
+  monitors:
+    - type: console
+      every_n_steps: 200
+    - type: gif
+      every_n_steps: 40    # 25 frames total
+      field: alpha

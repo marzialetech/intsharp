@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tanh_circle_5_rev_no_sharpening - intsharp</title>
+    <title>tanh_five_rev_cfl05_pm_sharpening - intsharp</title>
     <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
 </head>
@@ -23,27 +23,28 @@
         </nav>
         <main class="content">
             <div class="window">
-                <div class="window-header"><span class="window-title">tanh_circle_5_rev_no_sharpening</span></div>
+                <div class="window-header"><span class="window-title">tanh_five_rev_cfl05_pm_sharpening</span></div>
                 <div class="window-body">
                     <p><a href="../unit-tests.html">&larr; Unit Tests</a></p>
                     <h2>Description</h2>
-                    <p>2D advection test: a diffuse circle (radial tanh profile) advects in the x-direction through a periodic domain, completing 5 full revolutions. No sharpening is applied. Output: 20-frame GIF.</p>
+                    <p>Same setup as <a href="tanh_five_rev_cfl05_no_sharpening.html">tanh_five_rev_cfl05_no_sharpening</a> with Parameswaran-Mandal (PM) sharpening enabled. Tanh-hat, 5 revolutions, CFL = 0.5.</p>
                     <h3>How to run</h3>
-                    <pre><code>python run.py unit_tests/tanh_circle_5_rev_no_sharpening.yaml</code></pre>
+                    <pre><code>python run.py unit_tests/tanh_five_rev_cfl05_pm_sharpening.yaml</code></pre>
                     <p>The YAML lives in <code>unit_tests/</code>; each run copies it into the timestamped run folder (original remains for easy re-running).</p>
                     <h3>Config summary</h3>
                     <ul>
-                        <li><strong>Domain:</strong> x ∈ [-0.5, 0.5], y ∈ [-0.5, 0.5], 100×100 points</li>
-                        <li><strong>Time:</strong> dt = 0.005, 2000 steps (T = 10.0 s, five revolutions)</li>
-                        <li><strong>Velocity:</strong> (0.5, 0.0) — x-direction only</li>
-                        <li><strong>Field:</strong> alpha, IC radial tanh (radius 0.15, thickness 0.02), periodic BC</li>
-                        <li><strong>Solver:</strong> upwind (auto-selects upwind_2d); <strong>Timestepper:</strong> euler</li>
-                        <li><strong>Sharpening:</strong> disabled</li>
-                        <li><strong>Monitors:</strong> console (every 200 steps), gif (every 100 steps → 20 frames)</li>
+                        <li><strong>Domain:</strong> 1D cell-centered, x ∈ [-0.5, 0.5], 100 points (dx = 0.01)</li>
+                        <li><strong>Time:</strong> dt = 0.01, 1000 steps (T = 10 s, 5 revolutions)</li>
+                        <li><strong>CFL:</strong> 0.5</li>
+                        <li><strong>Velocity:</strong> 0.5</li>
+                        <li><strong>Field:</strong> alpha, IC tanh-hat, periodic BC</li>
+                        <li><strong>Solver:</strong> upwind; <strong>Timestepper:</strong> euler</li>
+                        <li><strong>Sharpening:</strong> PM, eps_target 0.02, strength 0.1</li>
+                        <li><strong>Monitors:</strong> console (every 200), gif (every 40 = 25 frames)</li>
                     </ul>
                     <h3>Output</h3>
-                    <p>Animated GIF (21 frames). Plays once, pauses 3 s at last frame, then repeats.</p>
-                    <p><img src="tanh_circle_5_rev_no_sharpening/alpha.gif" alt="alpha.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="21" data-fps="10" data-pause="3"></p>
+                    <p>Animated GIF (25 frames). Plays once, pauses 3 s at last frame, then repeats.</p>
+                    <p><img src="tanh_five_rev_cfl05_pm_sharpening/alpha.gif" alt="alpha.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="25" data-fps="10" data-pause="3"></p>
                 </div>
             </div>
         </main>

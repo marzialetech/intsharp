@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>test_txt_curve - intsharp</title>
+    <title>tanh_five_rev_cfl05_cl_sharpening - intsharp</title>
     <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
 </head>
@@ -23,49 +23,33 @@
         </nav>
         <main class="content">
             <div class="window">
-                <div class="window-header"><span class="window-title">test_txt_curve</span></div>
+                <div class="window-header"><span class="window-title">tanh_five_rev_cfl05_cl_sharpening</span></div>
                 <div class="window-body">
                     <p><a href="../unit-tests.html">&larr; Unit Tests</a></p>
                     <h2>Description</h2>
-                    <p>Short run exercising the <strong>txt</strong> and <strong>curve</strong> monitors. Output: columnar snapshot_*.txt and alpha_*.curve (x, value) files.</p>
+                    <p>Same setup as <a href="tanh_five_rev_cfl05_no_sharpening.html">tanh_five_rev_cfl05_no_sharpening</a> with Chiu-Lin (CL) sharpening enabled. Tanh-hat, 5 revolutions, CFL = 0.5.</p>
                     <h3>How to run</h3>
-                    <pre><code>python run.py unit_tests/test_txt_curve.yaml</code></pre>
+                    <pre><code>python run.py unit_tests/tanh_five_rev_cfl05_cl_sharpening.yaml</code></pre>
                     <p>The YAML lives in <code>unit_tests/</code>; each run copies it into the timestamped run folder (original remains for easy re-running).</p>
                     <h3>Config summary</h3>
                     <ul>
-                        <li><strong>Domain:</strong> x ∈ [-0.5, 0.5], 20 points</li>
-                        <li><strong>Time:</strong> dt = 0.05, 10 steps</li>
+                        <li><strong>Domain:</strong> 1D cell-centered, x ∈ [-0.5, 0.5], 100 points (dx = 0.01)</li>
+                        <li><strong>Time:</strong> dt = 0.01, 1000 steps (T = 10 s, 5 revolutions)</li>
+                        <li><strong>CFL:</strong> 0.5</li>
                         <li><strong>Velocity:</strong> 0.5</li>
-                        <li><strong>Field:</strong> alpha, periodic BC</li>
-                        <li><strong>Monitors:</strong> console, txt (every_n_steps: 5), curve (every_n_steps: 5)</li>
+                        <li><strong>Field:</strong> alpha, IC tanh-hat, periodic BC</li>
+                        <li><strong>Solver:</strong> upwind; <strong>Timestepper:</strong> euler</li>
+                        <li><strong>Sharpening:</strong> CL, eps_target 0.02, strength 1.0</li>
+                        <li><strong>Monitors:</strong> console (every 200), gif (every 40 = 25 frames)</li>
                     </ul>
                     <h3>Output</h3>
-                    <h4>Text snapshot (snippet of snapshot_00000.txt)</h4>
-                    <pre><code># step=5 t=2.500000e-01
-# x alpha
--5.000000e-01	4.025900e-02
--4.473684e-01	2.204259e-01
--3.947368e-01	5.467836e-01
--3.421053e-01	8.420330e-01
--2.894737e-01	9.753402e-01
--2.368421e-01	9.986263e-01
--1.842105e-01	9.960910e-01
--1.315789e-01	9.890119e-01
-...
-5.000000e-01	1.079751e-03</code></pre>
-                    <h4>Curve file (snippet of alpha_00000.curve)</h4>
-                    <pre><code>-5.000000e-01	4.025900e-02
--4.473684e-01	2.204259e-01
--3.947368e-01	5.467836e-01
--3.421053e-01	8.420330e-01
--2.894737e-01	9.753402e-01
--2.368421e-01	9.986263e-01
-...
-2.894737e-01	6.134320e-02</code></pre>
+                    <p>Animated GIF (25 frames). Plays once, pauses 3 s at last frame, then repeats.</p>
+                    <p><img src="tanh_five_rev_cfl05_cl_sharpening/alpha.gif" alt="alpha.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="25" data-fps="10" data-pause="3"></p>
                 </div>
             </div>
         </main>
     </div>
     <script src="../search.js"></script>
+    <script src="../gif-loop.js"></script>
 </body>
 </html>

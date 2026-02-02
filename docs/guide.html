@@ -48,17 +48,18 @@
                     </ol>
                     <p>Example folder structure after a run:</p>
                     <pre><code>unit_tests/
-└── tanh_one_rev_no_sharpening_2026-02-01_19:24:31/
-    ├── tanh_one_rev_no_sharpening.yaml   # copied config
+└── tanh_five_rev_cfl05_no_sharpening_2026-02-01_21:42:01/
+    ├── tanh_five_rev_cfl05_no_sharpening.yaml   # copied config
     └── alpha.gif                          # output</code></pre>
 
                     <h2>YAML Configuration Reference</h2>
 
                     <h3>Domain (1D)</h3>
+                    <p>1D domains are <strong>cell-centered</strong>: <code>dx = L/n_points</code>, with grid points at cell centers. This allows CFL = 1 to give exact return after one revolution (no phase drift).</p>
                     <pre><code>domain:
   x_min: -0.5      # Left boundary
   x_max: 0.5       # Right boundary
-  n_points: 100    # Number of grid points</code></pre>
+  n_points: 100    # Number of grid points (dx = L/n = 0.01)</code></pre>
 
                     <h3>Domain (2D)</h3>
                     <pre><code>domain:
@@ -200,22 +201,22 @@ velocity: [0.5, 0.0]   # 2D: (u, v) advection velocity</code></pre>
                     </table>
 
                     <h2>Unit Test Examples</h2>
-                    <p>These validation cases are included in <code>unit_tests/</code>.</p>
+                    <p>These validation cases are included in <code>unit_tests/</code>. The 1D tests share the same base case (tanh-hat, 5 revolutions, CFL = 0.5, cell-centered domain) and differ only by sharpening (none, PM, or CL).</p>
 
-                    <h3>Example 1: Advection Without Sharpening</h3>
-                    <p>Tanh-hat profile, 100 pt mesh, one revolution, periodic BC, no sharpening.</p>
-                    <div class="file-path">unit_tests/tanh_one_rev_no_sharpening.yaml</div>
-                    <pre><code># Validation: tanh-hat, 100 pt mesh, one revolution, periodic BC, NO sharpening
-# One revolution: domain L=1, velocity=0.5 => T = L/|u| = 2.0 s
+                    <h3>Example 1: 1D Advection Without Sharpening (CFL 0.5)</h3>
+                    <p>Tanh-hat profile, 5 revolutions, CFL = 0.5, 1D cell-centered domain, no sharpening.</p>
+                    <div class="file-path">unit_tests/tanh_five_rev_cfl05_no_sharpening.yaml</div>
+                    <pre><code># Validation: CFL=0.5, 5 revolutions, periodic BC, no sharpening
+# 1D cell-centered: dx = L/n = 0.01. CFL = u*dt/dx = 0.5 => dt = 0.01.
 
 domain:
   x_min: -0.5
   x_max: 0.5
-  n_points: 100
+  n_points: 100   # dx = 0.01
 
 time:
-  dt: 0.01
-  n_steps: 200   # T = 200 * 0.01 = 2.0 s (one revolution)
+  dt: 0.01         # CFL = 0.5
+  n_steps: 1000    # 5 revolutions = 10 s
 
 velocity: [0.5]
 
@@ -234,53 +235,13 @@ timestepper:
 output:
   monitors:
     - type: console
-      every_n_steps: 50
+      every_n_steps: 200
     - type: gif
-      every_n_steps: 20   # 200/20 = 10 frames
+      every_n_steps: 200   # 1 frame per revolution (6 frames)
       field: alpha</code></pre>
 
-                    <h3>Example 2: Advection With CL Sharpening</h3>
-                    <p>Same setup with Chiu-Lin interface sharpening enabled.</p>
-                    <div class="file-path">unit_tests/tanh_one_rev_cl_sharpening.yaml</div>
-                    <pre><code># Validation: tanh-hat, 100 pt mesh, one revolution, periodic BC, CL sharpening
-# One revolution: domain L=1, velocity=0.5 => T = L/|u| = 2.0 s
-
-domain:
-  x_min: -0.5
-  x_max: 0.5
-  n_points: 100
-
-time:
-  dt: 0.01
-  n_steps: 200
-
-velocity: [0.5]
-
-fields:
-  - name: alpha
-    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
-    boundary:
-      type: periodic
-
-solver:
-  type: upwind
-
-timestepper:
-  type: euler
-
-sharpening:
-  enabled: true
-  method: cl
-  eps_target: 0.01
-  strength: 1.0
-
-output:
-  monitors:
-    - type: console
-      every_n_steps: 50
-    - type: gif
-      every_n_steps: 20
-      field: alpha</code></pre>
+                    <h3>Example 2: 1D With PM or CL Sharpening</h3>
+                    <p>Same base case as Example 1 with Parameswaran-Mandal (PM) or Chiu-Lin (CL) sharpening enabled. Configs: <code>tanh_five_rev_cfl05_pm_sharpening.yaml</code>, <code>tanh_five_rev_cfl05_cl_sharpening.yaml</code>. Add a <code>sharpening:</code> block with <code>method: pm</code> or <code>method: cl</code>, <code>eps_target: 0.02</code>, and chosen <code>strength</code>.</p>
 
                     <h3>Example 3: 2D Circle Advection</h3>
                     <p>A diffuse circle (radial tanh profile) advecting in the x-direction through a 2D periodic domain.</p>
@@ -319,14 +280,17 @@ output:
       field: alpha</code></pre>
 
                     <h3>Running the Examples</h3>
-                    <pre><code># From the repo root:
-python run.py unit_tests/tanh_one_rev_no_sharpening.yaml
-python run.py unit_tests/tanh_one_rev_cl_sharpening.yaml
+                    <pre><code># From the repo root (1D CFL 0.5: no sharpening, PM, CL):
+python run.py unit_tests/tanh_five_rev_cfl05_no_sharpening.yaml
+python run.py unit_tests/tanh_five_rev_cfl05_pm_sharpening.yaml
+python run.py unit_tests/tanh_five_rev_cfl05_cl_sharpening.yaml
+# 2D circle:
 python run.py unit_tests/tanh_circle_5_rev_no_sharpening.yaml</code></pre>
 
                     <h2>Tips</h2>
                     <ul>
                         <li><strong>CFL warning:</strong> If CFL &gt; 1, a warning is printed. Reduce <code>dt</code> or increase <code>n_points</code>.</li>
+                        <li><strong>Phase error (drift):</strong> First-order upwind has a numerical phase error: the profile lags slightly (e.g. drifts left for u &gt; 0) over many revolutions. For 1D periodic with no phase error, use CFL = 1. The 1D domain is cell-centered with <code>dx = L/n_points</code>; use <code>dt = dx/|u|</code> and <code>n_steps = n_points</code> per revolution (e.g. 100 points ⇒ dx = 0.01, <code>dt: 0.02</code>, 100 steps/rev).</li>
                         <li><strong>10-frame GIF:</strong> For 200 steps, use <code>every_n_steps: 20</code> to get 10 frames.</li>
                         <li><strong>Combining monitors:</strong> You can use multiple monitors (e.g., console + gif + hdf5) in one run.</li>
                         <li><strong>2D auto-selection:</strong> When a 2D domain is specified, the framework automatically selects the 2D version of solvers (<code>upwind_2d</code>) and sharpening methods (<code>pm_2d</code>, <code>cl_2d</code>).</li>

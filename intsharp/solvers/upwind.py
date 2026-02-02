@@ -31,6 +31,15 @@ def upwind_advect(
 
     Solves: ∂f/∂t + u ∂f/∂x = 0
 
+    Notes
+    -----
+    First-order upwind has a numerical phase (dispersion) error: the numerical
+    wave travels slightly slower than the exact speed, so the profile lags
+    (e.g. drifts left for u > 0) over many revolutions. This is expected, not
+    a bug. For 1D periodic advection, CFL = 1 gives an exact integer shift
+    per step and no phase error. The 1D domain is cell-centered with
+    dx = L/n_points; use dt = dx/|u| and n_points steps per revolution.
+
     Parameters
     ----------
     field_values : NDArray

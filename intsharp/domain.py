@@ -128,10 +128,11 @@ def create_domain(config: DomainConfig) -> Domain:
         The computational domain.
     """
     if config.ndim == 1:
-        # 1D domain
+        # 1D domain: cell-centered so dx = L/n and n steps at CFL=1 = one exact revolution
         n = config.nx
-        x = np.linspace(config.x_min, config.x_max, n)
-        dx = x[1] - x[0] if n > 1 else config.x_max - config.x_min
+        L = config.x_max - config.x_min
+        dx = L / n if n > 0 else L
+        x = config.x_min + (np.arange(n, dtype=np.float64) + 0.5) * dx
 
         return Domain1D(
             x=x,

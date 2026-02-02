@@ -13,7 +13,7 @@ const contentIndex = {
     'install.html': 'install installation clone git pip requirements numpy matplotlib scipy pydantic pyyaml tqdm h5py imageio python virtual environment venv',
     'guide.html': 'running simulation yaml config configuration domain time velocity fields initial condition boundary solver timestepper sharpening output monitors tanh hat advection revolution unit test validation example 2d circle',
     'components.html': 'upwind upwind_2d advection solver euler rk4 runge kutta timestepper pm pm_2d parameswaran mandal cl cl_2d chiu lin sharpening periodic neumann dirichlet boundary condition console progress png pdf image gif animation hdf5 data txt text curve output monitor gradient divergence cfl courant 2d meshgrid pcolormesh',
-    'unit-tests.html': 'unit test validation tanh one rev no sharpening cl sharpening pm sharpening test txt curve gif output snapshot curve tanh_circle 2d circle radial revolution periodic domain'
+    'unit-tests.html': 'unit test validation tanh five rev cfl05 no sharpening pm cl sharpening gif output tanh_circle 2d circle radial revolution periodic domain cell-centered cfl'
 };
 
 document.addEventListener('DOMContentLoaded', function() {
