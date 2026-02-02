@@ -1,0 +1,34 @@
+# Quick test for txt and curve monitors
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points: 20
+
+time:
+  dt: 0.05
+  n_steps: 10
+
+velocity: [0.5]
+
+fields:
+  - name: alpha
+    initial_condition: "0.5 * (1 + tanh(-x / 0.1))"
+    boundary:
+      type: periodic
+
+solver:
+  type: upwind
+
+timestepper:
+  type: euler
+
+output:
+  directory: ./out
+  monitors:
+    - type: console
+    - type: txt
+      every_n_steps: 5
+      field: alpha
+    - type: curve
+      every_n_steps: 5
+      field: alpha

@@ -1,0 +1,182 @@
+"""
+Main simulation runner.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+import numpy as np
+
+from .boundary import apply_bc
+from .config import SimulationConfig, load_config
+from .domain import Domain1D, create_domain
+from .fields import Field, create_fields
+from .registry import get_sharpening, get_solver
+
+# Import submodules to trigger registration of solvers/monitors/sharpening/timesteppers
+from . import solvers  # noqa: F401
+from . import monitors  # noqa: F401
+from . import sharpening as sharpening_module  # noqa: F401
+from . import timesteppers as timesteppers_module  # noqa: F401
+
+if TYPE_CHECKING:
+    from .monitors.base import Monitor
+
+
+def create_monitors(
+    config: SimulationConfig,
+    output_dir: Path,
+) -> list["Monitor"]:
+    """
+    Create monitor instances from configuration.
+
+    Parameters
+    ----------
+    config : SimulationConfig
+        Simulation configuration.
+    output_dir : Path
+        Base output directory.
+
+    Returns
+    -------
+    list[Monitor]
+        List of monitor instances.
+    """
+    from .registry import get_monitor
+
+    monitor_list = []
+
+    for mon_cfg in config.output.monitors:
+        monitor_cls = get_monitor(mon_cfg.type)
+
+        # Build kwargs for monitor
+        kwargs = {
+            "output_dir": output_dir,
+            "every_n_steps": mon_cfg.every_n_steps,
+            "at_times": mon_cfg.at_times,
+        }
+
+        # Add type-specific kwargs
+        if mon_cfg.type == "console":
+            kwargs["total_steps"] = config.time.n_steps
+        elif mon_cfg.type in ("png", "pdf", "gif"):
+            kwargs["field"] = mon_cfg.field
+        elif mon_cfg.type in ("txt", "curve"):
+            kwargs["field"] = mon_cfg.field
+            kwargs["fields"] = mon_cfg.fields
+        elif mon_cfg.type == "hdf5":
+            kwargs["fields"] = mon_cfg.fields
+
+        monitor_list.append(monitor_cls(**kwargs))
+
+    return monitor_list
+
+
+def run_simulation(config: SimulationConfig) -> dict[str, Field]:
+    """
+    Run the simulation.
+
+    Parameters
+    ----------
+    config : SimulationConfig
+        Complete simulation configuration.
+
+    Returns
+    -------
+    dict[str, Field]
+        Final field states.
+    """
+    # Create domain
+    domain = create_domain(config.domain)
+
+    # Create fields
+    fields = create_fields(config.fields, domain)
+
+    # Get solver
+    solver_fn = get_solver(config.solver.type)
+
+    # Get sharpening method if enabled
+    sharpening_fn = None
+    if config.sharpening and config.sharpening.enabled:
+        sharpening_fn = get_sharpening(config.sharpening.method)
+
+    # Create output directory
+    output_dir = Path(config.output.directory)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create monitors
+    monitor_list = create_monitors(config, output_dir)
+
+    # Extract parameters
+    dt = config.time.dt
+    n_steps = config.time.n_steps
+    velocity = config.velocity[0]  # 1D
+    dx = domain.dx
+
+    # Initialize monitors
+    for monitor in monitor_list:
+        monitor.on_start(fields, domain)
+
+    # Time loop
+    t = 0.0
+    for step in range(1, n_steps + 1):
+        # Advect each field
+        for name, field in fields.items():
+            # Advection step
+            new_values = solver_fn(
+                field.values,
+                velocity,
+                dx,
+                dt,
+                field.bc,
+            )
+
+            # Apply boundary conditions
+            new_values = apply_bc(new_values, field.bc, dx)
+
+            field.values = new_values
+
+        # Sharpening post-step
+        if sharpening_fn is not None and config.sharpening is not None:
+            for name, field in fields.items():
+                field.values = sharpening_fn(
+                    field.values,
+                    dx,
+                    dt,
+                    config.sharpening.eps_target,
+                    config.sharpening.strength,
+                    field.bc,
+                )
+
+        # Update time
+        t += dt
+
+        # Call monitors
+        for monitor in monitor_list:
+            monitor.on_step(step, t, fields, domain)
+
+    # Finalize monitors
+    for monitor in monitor_list:
+        monitor.on_end(fields, domain)
+
+    return fields
+
+
+def run_from_file(config_path: str | Path) -> dict[str, Field]:
+    """
+    Load configuration from file and run simulation.
+
+    Parameters
+    ----------
+    config_path : str or Path
+        Path to YAML configuration file.
+
+    Returns
+    -------
+    dict[str, Field]
+        Final field states.
+    """
+    config = load_config(config_path)
+    return run_simulation(config)

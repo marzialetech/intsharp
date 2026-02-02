@@ -1,0 +1,11 @@
+# Virtual env and caches
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+
+# Optional: uncomment to ignore timestamped run outputs under unit_tests
+# unit_tests/*_*/
