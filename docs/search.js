@@ -5,13 +5,15 @@ const searchIndex = [
     { title: 'Installation', url: 'install.html', keywords: 'install setup pip requirements dependencies python' },
     { title: 'Running Simulations', url: 'guide.html', keywords: 'run simulation yaml config example tutorial guide' },
     { title: 'Components', url: 'components.html', keywords: 'components solver upwind timestepper euler rk4 sharpening pm cl boundary periodic neumann dirichlet monitor console png gif hdf5 txt curve' },
+    { title: 'Unit Tests', url: 'unit-tests.html', keywords: 'unit test validation tanh sharpening gif txt curve output' },
 ];
 
 const contentIndex = {
     'index.html': 'intsharp modular yaml simulation framework 1d interface advection sharpening pydantic validation upwind euler rk4 pm cl periodic neumann dirichlet console png pdf gif hdf5 txt curve registry',
     'install.html': 'install installation clone git pip requirements numpy matplotlib scipy pydantic pyyaml tqdm h5py imageio python virtual environment venv',
     'guide.html': 'running simulation yaml config configuration domain time velocity fields initial condition boundary solver timestepper sharpening output monitors tanh hat advection revolution unit test validation example',
-    'components.html': 'upwind advection solver euler rk4 runge kutta timestepper pm parameswaran mandal cl chiu lin corrective flux sharpening periodic neumann dirichlet boundary condition console progress png pdf image gif animation hdf5 data txt text curve output monitor gradient divergence cfl courant'
+    'components.html': 'upwind advection solver euler rk4 runge kutta timestepper pm parameswaran mandal cl chiu lin sharpening periodic neumann dirichlet boundary condition console progress png pdf image gif animation hdf5 data txt text curve output monitor gradient divergence cfl courant',
+    'unit-tests.html': 'unit test validation tanh one rev no sharpening cl sharpening test txt curve gif output snapshot curve'
 };
 
 document.addEventListener('DOMContentLoaded', function() {

@@ -3,7 +3,7 @@ Interface sharpening source terms.
 
 Implements:
 - PM (Parameswaran-Mandal)
-- CL (Corrective flux / Chiu-Lin)
+- CL (Chiu-Lin)
 
 Applied post-step via operator splitting.
 """
@@ -115,7 +115,7 @@ def cl_sharpening(
     bc: BoundaryCondition,
 ) -> NDArray[np.float64]:
     """
-    Corrective flux / Chiu-Lin sharpening.
+    Chiu-Lin sharpening.
 
     RHS = div(eps * grad(psi) - psi * (1-psi) * n_hat)
 

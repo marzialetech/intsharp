@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>test_txt_curve - intsharp</title>
+    <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <div class="app">
+        <nav class="sidebar">
+            <div class="sidebar-header"><h1>intsharp</h1><span class="version">v1.0</span></div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search..." autocomplete="off"></div>
+            <ul class="nav-list" id="nav-list">
+                <li><a href="../index.html" data-page="home">Home</a></li>
+                <li><a href="../install.html" data-page="install">Installation</a></li>
+                <li><a href="../guide.html" data-page="guide">Running Simulations</a></li>
+                <li><a href="../components.html" data-page="components">Components</a></li>
+                <li><a href="../unit-tests.html" class="active" data-page="unit-tests">Unit Tests</a></li>
+            </ul>
+            <div class="sidebar-footer"><a href="https://github.com/marzialetech/intsharp" target="_blank">GitHub</a></div>
+        </nav>
+        <main class="content">
+            <div class="window">
+                <div class="window-header"><span class="window-title">test_txt_curve</span></div>
+                <div class="window-body">
+                    <p><a href="../unit-tests.html">&larr; Unit Tests</a></p>
+                    <h2>Description</h2>
+                    <p>Short run exercising the <strong>txt</strong> and <strong>curve</strong> monitors. Output: columnar snapshot_*.txt and alpha_*.curve (x, value) files.</p>
+                    <h3>How to run</h3>
+                    <pre><code>python run.py unit_tests/test_txt_curve.yaml</code></pre>
+                    <p>Before the first run, the YAML lives in <code>unit_tests/</code>; after a run it is moved into the timestamped run folder.</p>
+                    <h3>Config summary</h3>
+                    <ul>
+                        <li><strong>Domain:</strong> x ∈ [-0.5, 0.5], 20 points</li>
+                        <li><strong>Time:</strong> dt = 0.05, 10 steps</li>
+                        <li><strong>Velocity:</strong> 0.5</li>
+                        <li><strong>Field:</strong> alpha, periodic BC</li>
+                        <li><strong>Monitors:</strong> console, txt (every_n_steps: 5), curve (every_n_steps: 5)</li>
+                    </ul>
+                    <h3>Output</h3>
+                    <h4>Text snapshot (snippet of snapshot_00000.txt)</h4>
+                    <pre><code># step=5 t=2.500000e-01
+# x alpha
+-5.000000e-01	4.025900e-02
+-4.473684e-01	2.204259e-01
+-3.947368e-01	5.467836e-01
+-3.421053e-01	8.420330e-01
+-2.894737e-01	9.753402e-01
+-2.368421e-01	9.986263e-01
+-1.842105e-01	9.960910e-01
+-1.315789e-01	9.890119e-01
+...
+5.000000e-01	1.079751e-03</code></pre>
+                    <h4>Curve file (snippet of alpha_00000.curve)</h4>
+                    <pre><code>-5.000000e-01	4.025900e-02
+-4.473684e-01	2.204259e-01
+-3.947368e-01	5.467836e-01
+-3.421053e-01	8.420330e-01
+-2.894737e-01	9.753402e-01
+-2.368421e-01	9.986263e-01
+...
+2.894737e-01	6.134320e-02</code></pre>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../search.js"></script>
+</body>
+</html>
