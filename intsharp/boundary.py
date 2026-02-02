@@ -146,3 +146,151 @@ def get_ghost_values(
 
     else:
         raise ValueError(f"Unknown BC type: {bc.bc_type}")
+
+
+# ---------------------------------------------------------------------------
+# 2D Boundary Condition Helpers
+# ---------------------------------------------------------------------------
+
+def apply_bc_2d(
+    field: NDArray[np.float64],
+    bc: BoundaryCondition,
+    dx: float,
+    dy: float,
+) -> NDArray[np.float64]:
+    """
+    Apply boundary conditions to a 2D field (in-place modification).
+
+    For periodic: no explicit action needed (handled by roll in solvers).
+    For Neumann/Dirichlet: sets boundary values on all four edges.
+
+    Parameters
+    ----------
+    field : NDArray
+        The 2D field values (shape: ny, nx), modified in-place.
+    bc : BoundaryCondition
+        The boundary condition (applied uniformly to all edges).
+    dx : float
+        Grid spacing in x.
+    dy : float
+        Grid spacing in y.
+
+    Returns
+    -------
+    NDArray
+        The field with BCs applied.
+    """
+    if bc.bc_type == "periodic":
+        # Periodic BCs are handled implicitly via np.roll in solvers
+        pass
+
+    elif bc.bc_type == "neumann":
+        # Neumann: set boundary values based on gradient
+        # For 2D, apply to all four edges (x-left, x-right, y-bottom, y-top)
+        assert bc.gradient_left is not None
+        assert bc.gradient_right is not None
+        # Left edge (x = 0): field[:, 0] = field[:, 1] - gradient_left * dx
+        field[:, 0] = field[:, 1] - bc.gradient_left * dx
+        # Right edge (x = nx-1): field[:, -1] = field[:, -2] + gradient_right * dx
+        field[:, -1] = field[:, -2] + bc.gradient_right * dx
+        # Bottom edge (y = 0): field[0, :] = field[1, :] - gradient_left * dy
+        field[0, :] = field[1, :] - bc.gradient_left * dy
+        # Top edge (y = ny-1): field[-1, :] = field[-2, :] + gradient_right * dy
+        field[-1, :] = field[-2, :] + bc.gradient_right * dy
+
+    elif bc.bc_type == "dirichlet":
+        # Dirichlet: set boundary values directly
+        assert bc.value_left is not None
+        assert bc.value_right is not None
+        field[:, 0] = bc.value_left
+        field[:, -1] = bc.value_right
+        field[0, :] = bc.value_left
+        field[-1, :] = bc.value_right
+
+    return field
+
+
+def get_ghost_values_2d_x(
+    field: NDArray[np.float64],
+    bc: BoundaryCondition,
+    dx: float,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """
+    Get ghost cell values for left and right boundaries in x (2D).
+
+    Parameters
+    ----------
+    field : NDArray
+        The 2D field values (shape: ny, nx).
+    bc : BoundaryCondition
+        The boundary condition.
+    dx : float
+        Grid spacing in x.
+
+    Returns
+    -------
+    tuple[NDArray, NDArray]
+        (left_ghost, right_ghost) arrays of shape (ny,).
+    """
+    if bc.bc_type == "periodic":
+        return field[:, -1], field[:, 0]
+
+    elif bc.bc_type == "neumann":
+        assert bc.gradient_left is not None
+        assert bc.gradient_right is not None
+        left_ghost = field[:, 0] - bc.gradient_left * dx
+        right_ghost = field[:, -1] + bc.gradient_right * dx
+        return left_ghost, right_ghost
+
+    elif bc.bc_type == "dirichlet":
+        assert bc.value_left is not None
+        assert bc.value_right is not None
+        left_ghost = 2 * bc.value_left - field[:, 0]
+        right_ghost = 2 * bc.value_right - field[:, -1]
+        return left_ghost, right_ghost
+
+    else:
+        raise ValueError(f"Unknown BC type: {bc.bc_type}")
+
+
+def get_ghost_values_2d_y(
+    field: NDArray[np.float64],
+    bc: BoundaryCondition,
+    dy: float,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """
+    Get ghost cell values for bottom and top boundaries in y (2D).
+
+    Parameters
+    ----------
+    field : NDArray
+        The 2D field values (shape: ny, nx).
+    bc : BoundaryCondition
+        The boundary condition.
+    dy : float
+        Grid spacing in y.
+
+    Returns
+    -------
+    tuple[NDArray, NDArray]
+        (bottom_ghost, top_ghost) arrays of shape (nx,).
+    """
+    if bc.bc_type == "periodic":
+        return field[-1, :], field[0, :]
+
+    elif bc.bc_type == "neumann":
+        assert bc.gradient_left is not None
+        assert bc.gradient_right is not None
+        bottom_ghost = field[0, :] - bc.gradient_left * dy
+        top_ghost = field[-1, :] + bc.gradient_right * dy
+        return bottom_ghost, top_ghost
+
+    elif bc.bc_type == "dirichlet":
+        assert bc.value_left is not None
+        assert bc.value_right is not None
+        bottom_ghost = 2 * bc.value_left - field[0, :]
+        top_ghost = 2 * bc.value_right - field[-1, :]
+        return bottom_ghost, top_ghost
+
+    else:
+        raise ValueError(f"Unknown BC type: {bc.bc_type}")

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tanh_one_rev_cl_sharpening - intsharp</title>
+    <title>tanh_circle_5_rev_no_sharpening - intsharp</title>
     <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
 </head>
@@ -23,27 +23,27 @@
         </nav>
         <main class="content">
             <div class="window">
-                <div class="window-header"><span class="window-title">tanh_one_rev_cl_sharpening</span></div>
+                <div class="window-header"><span class="window-title">tanh_circle_5_rev_no_sharpening</span></div>
                 <div class="window-body">
                     <p><a href="../unit-tests.html">&larr; Unit Tests</a></p>
                     <h2>Description</h2>
-                    <p>Advection with Chiu-Lin sharpening. Tanh-hat profile, one revolution in a periodic domain. Output: 10-frame GIF.</p>
+                    <p>2D advection test: a diffuse circle (radial tanh profile) advects in the x-direction through a periodic domain, completing 5 full revolutions. No sharpening is applied. Output: 20-frame GIF.</p>
                     <h3>How to run</h3>
-                    <pre><code>python run.py unit_tests/tanh_one_rev_cl_sharpening.yaml</code></pre>
+                    <pre><code>python run.py unit_tests/tanh_circle_5_rev_no_sharpening.yaml</code></pre>
                     <p>The YAML lives in <code>unit_tests/</code>; each run copies it into the timestamped run folder (original remains for easy re-running).</p>
                     <h3>Config summary</h3>
                     <ul>
-                        <li><strong>Domain:</strong> x ∈ [-0.5, 0.5], 100 points</li>
-                        <li><strong>Time:</strong> dt = 0.01, 200 steps (T = 2.0 s, one revolution)</li>
-                        <li><strong>Velocity:</strong> 0.5</li>
-                        <li><strong>Field:</strong> alpha, IC tanh-hat, periodic BC</li>
-                        <li><strong>Solver:</strong> upwind; <strong>Timestepper:</strong> euler</li>
-                        <li><strong>Sharpening:</strong> CL, eps_target 0.01, strength 1.0</li>
-                        <li><strong>Monitors:</strong> console, gif (every_n_steps: 20)</li>
+                        <li><strong>Domain:</strong> x ∈ [-0.5, 0.5], y ∈ [-0.5, 0.5], 100×100 points</li>
+                        <li><strong>Time:</strong> dt = 0.005, 2000 steps (T = 10.0 s, five revolutions)</li>
+                        <li><strong>Velocity:</strong> (0.5, 0.0) — x-direction only</li>
+                        <li><strong>Field:</strong> alpha, IC radial tanh (radius 0.15, thickness 0.02), periodic BC</li>
+                        <li><strong>Solver:</strong> upwind (auto-selects upwind_2d); <strong>Timestepper:</strong> euler</li>
+                        <li><strong>Sharpening:</strong> disabled</li>
+                        <li><strong>Monitors:</strong> console (every 200 steps), gif (every 100 steps → 20 frames)</li>
                     </ul>
                     <h3>Output</h3>
-                    <p>Animated GIF (10 frames):</p>
-                    <p><img src="tanh_one_rev_cl_sharpening/alpha.gif" alt="alpha.gif" class="unit-test-output" style="max-width:100%; height:auto;"></p>
+                    <p>Animated GIF (20 frames) showing the circle advecting through the periodic domain:</p>
+                    <p><img src="tanh_circle_5_rev_no_sharpening/alpha.gif" alt="alpha.gif" class="unit-test-output" style="max-width:100%; height:auto;"></p>
                 </div>
             </div>
         </main>

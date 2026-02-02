@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>pm (Parameswaran-Mandal) - intsharp</title>
+    <title>cl_2d (Chiu-Lin 2D) - intsharp</title>
     <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
     <script src="../katex-render.js"></script>
@@ -24,14 +24,19 @@
         </nav>
         <main class="content">
             <div class="window">
-                <div class="window-header"><span class="window-title">pm (Parameswaran-Mandal)</span></div>
+                <div class="window-header"><span class="window-title">cl_2d (Chiu-Lin 2D)</span></div>
                 <div class="window-body">
                     <p><a href="../components.html">&larr; Components</a></p>
                     <div class="file-path">intsharp/sharpening.py</div>
-                    <h2>Parameswaran-Mandal sharpening</h2>
+                    <h2>Chiu-Lin sharpening (2D)</h2>
                     <p>RHS for the volume fraction \( \psi \):</p>
-                    <div class="math-block">\[ \text{RHS} = -K \psi(1-\psi)(1-2\psi) + \epsilon (1-2\psi) |\nabla\psi| \]</div>
-                    <p>where \( K = 1/(4\epsilon^2) \).</p>
+                    <div class="math-block">\[ \text{RHS} = \nabla \cdot \left( \epsilon \nabla\psi - \psi(1-\psi) \hat{n} \right) \]</div>
+                    <p>where the unit normal is:</p>
+                    <div class="math-block">\[ \hat{n} = \frac{\nabla\psi}{|\nabla\psi|} \]</div>
+                    <p>In 2D, the flux vector is:</p>
+                    <div class="math-block">\[ \mathbf{q} = \left( \epsilon \frac{\partial\psi}{\partial x} - \psi(1-\psi) n_x, \; \epsilon \frac{\partial\psi}{\partial y} - \psi(1-\psi) n_y \right) \]</div>
+                    <p>and the RHS is the divergence:</p>
+                    <div class="math-block">\[ \text{RHS} = \frac{\partial q_x}{\partial x} + \frac{\partial q_y}{\partial y} \]</div>
                     <p>Update:</p>
                     <div class="math-block">\[ \psi^{n+1} = \psi^n + \Delta t \cdot \Gamma \cdot \text{RHS} \]</div>
                     <p><strong>Parameters:</strong></p>
@@ -39,16 +44,9 @@
                         <li><code>eps_target</code>: Target interface thickness \( \epsilon \)</li>
                         <li><code>strength</code>: Sharpening strength \( \Gamma \)</li>
                     </ul>
+                    <p><strong>Note:</strong> This method is automatically selected when a 2D domain is specified and <code>sharpening.method: cl</code> is used.</p>
                     <h3>Source</h3>
-                    <p><a href="../papers/parameswaran-mandal.pdf" target="_blank">A stable interface-preserving reinitialization equation for conservative level set method</a> (PDF)</p>
-                    <p>BibTeX:</p>
-                    <pre><code>@article{parameswaran_mandal_stable,
-  author  = {Parameswaran, S. and Mandal, J. C.},
-  title   = {A stable interface-preserving reinitialization equation for conservative level set method},
-  journal = {},
-  year    = {},
-  note    = {See PDF for full citation. Related: arXiv:2012.08747.}
-}</code></pre>
+                    <p><a href="../papers/chiulin.pdf" target="_blank">A conservative phase field method for solving incompressible two-phase flows</a> (PDF)</p>
                 </div>
             </div>
         </main>

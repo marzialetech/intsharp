@@ -19,20 +19,71 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 # ---------------------------------------------------------------------------
 
 class DomainConfig(BaseModel):
-    """1D domain configuration."""
+    """1D or 2D domain configuration."""
     x_min: float = Field(..., description="Left boundary of domain")
     x_max: float = Field(..., description="Right boundary of domain")
-    n_points: int = Field(..., gt=1, description="Number of grid points")
+    n_points: Optional[int] = Field(None, gt=1, description="Number of grid points (1D only)")
+    n_points_x: Optional[int] = Field(None, gt=1, description="Number of grid points in x (2D)")
+    y_min: Optional[float] = Field(None, description="Bottom boundary of domain (2D)")
+    y_max: Optional[float] = Field(None, description="Top boundary of domain (2D)")
+    n_points_y: Optional[int] = Field(None, gt=1, description="Number of grid points in y (2D)")
+
+    @model_validator(mode="after")
+    def validate_domain_params(self) -> "DomainConfig":
+        """Ensure either 1D or 2D parameters are specified."""
+        is_2d = self.y_min is not None or self.y_max is not None or self.n_points_y is not None
+        if is_2d:
+            if self.y_min is None or self.y_max is None or self.n_points_y is None:
+                raise ValueError(
+                    "2D domain requires 'y_min', 'y_max', and 'n_points_y'"
+                )
+            if self.n_points_x is None and self.n_points is None:
+                raise ValueError(
+                    "2D domain requires 'n_points_x' (or 'n_points' for x)"
+                )
+        else:
+            if self.n_points is None and self.n_points_x is None:
+                raise ValueError("1D domain requires 'n_points'")
+        return self
+
+    @property
+    def ndim(self) -> int:
+        """Number of spatial dimensions."""
+        return 2 if self.y_min is not None else 1
+
+    @property
+    def nx(self) -> int:
+        """Number of points in x."""
+        return self.n_points_x if self.n_points_x is not None else (self.n_points or 0)
+
+    @property
+    def ny(self) -> int:
+        """Number of points in y (0 for 1D)."""
+        return self.n_points_y if self.n_points_y is not None else 0
 
     @property
     def dx(self) -> float:
-        """Grid spacing."""
-        return (self.x_max - self.x_min) / (self.n_points - 1)
+        """Grid spacing in x."""
+        return (self.x_max - self.x_min) / (self.nx - 1)
+
+    @property
+    def dy(self) -> float:
+        """Grid spacing in y (0 for 1D)."""
+        if self.ndim == 1:
+            return 0.0
+        return (self.y_max - self.y_min) / (self.ny - 1)  # type: ignore
 
     @property
     def L(self) -> float:
-        """Domain length."""
+        """Domain length in x."""
         return self.x_max - self.x_min
+
+    @property
+    def Ly(self) -> float:
+        """Domain length in y (0 for 1D)."""
+        if self.ndim == 1:
+            return 0.0
+        return self.y_max - self.y_min  # type: ignore
 
 
 class TimeConfig(BaseModel):
@@ -85,7 +136,7 @@ class FieldConfig(BaseModel):
     """Configuration for a single field (e.g., volume fraction)."""
     name: str = Field(..., description="Field name (e.g., 'alpha')")
     initial_condition: str = Field(
-        ..., description="Expression for initial condition (uses 'x' as variable)"
+        ..., description="Expression for initial condition (uses 'x' for 1D, 'x', 'y', 'r' for 2D)"
     )
     boundary: BoundaryConfig = Field(..., description="Boundary condition")
 
@@ -105,7 +156,7 @@ class TimeStepperConfig(BaseModel):
 class SharpeningConfig(BaseModel):
     """Interface sharpening configuration (optional)."""
     enabled: bool = Field(False, description="Enable sharpening")
-    method: Literal["pm", "cl"] = Field("cl", description="Sharpening method")
+    method: Literal["pm", "pm_cal", "cl"] = Field("cl", description="Sharpening method")
     eps_target: float = Field(
         ..., gt=0, description="Target interface thickness"
     )
@@ -114,7 +165,7 @@ class SharpeningConfig(BaseModel):
 
 class MonitorConfig(BaseModel):
     """Output monitor configuration."""
-    type: Literal["console", "png", "pdf", "gif", "hdf5", "txt", "curve"] = Field(
+    type: Literal["console", "png", "pdf", "gif", "contour_gif", "hdf5", "txt", "curve"] = Field(
         ..., description="Monitor type"
     )
     every_n_steps: Optional[int] = Field(
@@ -128,6 +179,16 @@ class MonitorConfig(BaseModel):
     )
     fields: Optional[list[str]] = Field(
         None, description="Fields to output (for hdf5)"
+    )
+    # Contour GIF options
+    contour_level: Optional[float] = Field(
+        0.5, description="Contour level to draw (for contour_gif)"
+    )
+    show_centroid: Optional[bool] = Field(
+        False, description="Show center of mass marker (for contour_gif)"
+    )
+    show_crosshairs: Optional[bool] = Field(
+        False, description="Show crosshair lines through centroid (for contour_gif)"
     )
 
     @model_validator(mode="after")
@@ -163,22 +224,32 @@ class SimulationConfig(BaseModel):
     sharpening: Optional[SharpeningConfig] = Field(None)
     output: OutputConfig = Field(default_factory=OutputConfig)
 
-    @field_validator("velocity")
-    @classmethod
-    def validate_velocity_dimension(cls, v: list[float]) -> list[float]:
-        if len(v) != 1:
+    @model_validator(mode="after")
+    def validate_velocity_dimension(self) -> "SimulationConfig":
+        """Validate velocity dimension matches domain dimension."""
+        ndim = self.domain.ndim
+        if len(self.velocity) != ndim:
             raise ValueError(
-                f"velocity has {len(v)} components but domain is 1D (expected 1)"
+                f"velocity has {len(self.velocity)} components but domain is {ndim}D "
+                f"(expected {ndim})"
             )
-        return v
+        return self
 
     @model_validator(mode="after")
     def validate_cfl_warning(self) -> "SimulationConfig":
         """Warn if CFL > 1."""
-        u = abs(self.velocity[0])
         dt = self.time.dt
         dx = self.domain.dx
-        cfl = u * dt / dx
+        u = abs(self.velocity[0])
+        cfl_x = u * dt / dx
+        cfl = cfl_x
+
+        if self.domain.ndim == 2:
+            dy = self.domain.dy
+            v = abs(self.velocity[1])
+            cfl_y = v * dt / dy if dy > 0 else 0.0
+            cfl = max(cfl_x, cfl_y)
+
         if cfl > 1.0:
             import warnings
             warnings.warn(

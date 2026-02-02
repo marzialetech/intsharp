@@ -1,0 +1,49 @@
+# Validation: 2D PM sharpening with K = 1/(4*eps^2) formula
+# Circle advects in x-direction with periodic BCs
+
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points_x: 100
+  y_min: -0.5
+  y_max: 0.5
+  n_points_y: 100
+
+time:
+  dt: 0.005
+  n_steps: 2000   # 5 revolutions = 10.0 s
+
+velocity: [0.5, 0.0]
+
+fields:
+  - name: alpha
+    initial_condition: "0.5 * (1 + tanh((0.15 - r) / 0.02))"
+    boundary:
+      type: periodic
+
+solver:
+  type: upwind
+
+timestepper:
+  type: euler
+
+sharpening:
+  enabled: true
+  method: pm           # Uses K = 1/(4*eps^2)
+  eps_target: 0.02
+  strength: 0.1
+
+output:
+  directory: unit_tests/tanh_circle_5_rev_pm_K
+  monitors:
+    - type: console
+      every_n_steps: 200
+    - type: gif
+      every_n_steps: 100
+      field: alpha
+    - type: contour_gif
+      every_n_steps: 100
+      field: alpha
+      contour_level: 0.5
+      show_centroid: true
+      show_crosshairs: true

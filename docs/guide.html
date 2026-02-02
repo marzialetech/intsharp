@@ -42,22 +42,32 @@
                     <p>When you run a simulation:</p>
                     <ol>
                         <li>A timestamped folder is created in the same directory as the YAML file</li>
-                        <li>The YAML config is <strong>moved</strong> into this run folder</li>
+                        <li>The YAML config is <strong>copied</strong> into this run folder (original remains for easy re-running)</li>
                         <li>All outputs (GIFs, images, data) are saved to the run folder</li>
+                        <li>Initial conditions (step 0) are always output along with subsequent steps</li>
                     </ol>
                     <p>Example folder structure after a run:</p>
                     <pre><code>unit_tests/
 └── tanh_one_rev_no_sharpening_2026-02-01_19:24:31/
-    ├── tanh_one_rev_no_sharpening.yaml   # moved config
+    ├── tanh_one_rev_no_sharpening.yaml   # copied config
     └── alpha.gif                          # output</code></pre>
 
                     <h2>YAML Configuration Reference</h2>
 
-                    <h3>Domain</h3>
+                    <h3>Domain (1D)</h3>
                     <pre><code>domain:
   x_min: -0.5      # Left boundary
   x_max: 0.5       # Right boundary
   n_points: 100    # Number of grid points</code></pre>
+
+                    <h3>Domain (2D)</h3>
+                    <pre><code>domain:
+  x_min: -0.5        # Left boundary
+  x_max: 0.5         # Right boundary
+  n_points_x: 100    # Grid points in x
+  y_min: -0.5        # Bottom boundary
+  y_max: 0.5         # Top boundary
+  n_points_y: 100    # Grid points in y</code></pre>
 
                     <h3>Time</h3>
                     <pre><code>time:
@@ -65,7 +75,8 @@
   n_steps: 200     # Number of steps</code></pre>
 
                     <h3>Velocity</h3>
-                    <pre><code>velocity: [0.5]    # 1D advection velocity (list with 1 element)</code></pre>
+                    <pre><code>velocity: [0.5]        # 1D: advection velocity (list with 1 element)
+velocity: [0.5, 0.0]   # 2D: (u, v) advection velocity</code></pre>
 
                     <h3>Fields</h3>
                     <pre><code>fields:
@@ -73,7 +84,12 @@
     initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
     boundary:
       type: periodic   # or neumann, dirichlet</code></pre>
-                    <p>Initial conditions are Python expressions evaluated with <code>x</code> (grid), <code>np</code> (numpy), and math functions (<code>sin</code>, <code>cos</code>, <code>tanh</code>, <code>exp</code>, <code>sqrt</code>, <code>pi</code>).</p>
+                    <p>Initial conditions are Python expressions evaluated with:</p>
+                    <ul>
+                        <li><strong>1D:</strong> <code>x</code> (grid coordinates)</li>
+                        <li><strong>2D:</strong> <code>x</code>, <code>y</code> (meshgrid), <code>r = sqrt(x² + y²)</code> (radial distance)</li>
+                        <li>Math functions: <code>sin</code>, <code>cos</code>, <code>tanh</code>, <code>exp</code>, <code>sqrt</code>, <code>pi</code>, <code>np</code> (numpy)</li>
+                    </ul>
 
                     <h4>Boundary Condition Types</h4>
                     <table>
@@ -266,16 +282,55 @@ output:
       every_n_steps: 20
       field: alpha</code></pre>
 
+                    <h3>Example 3: 2D Circle Advection</h3>
+                    <p>A diffuse circle (radial tanh profile) advecting in the x-direction through a 2D periodic domain.</p>
+                    <div class="file-path">unit_tests/tanh_circle_5_rev_no_sharpening.yaml</div>
+                    <pre><code># Validation: tanh-circle (radial), 100x100 mesh, 5 revolutions, periodic BC
+
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points_x: 100
+  y_min: -0.5
+  y_max: 0.5
+  n_points_y: 100
+
+time:
+  dt: 0.005
+  n_steps: 2000   # 5 revolutions = 10.0 s
+
+velocity: [0.5, 0.0]  # x-direction only
+
+fields:
+  - name: alpha
+    initial_condition: "0.5 * (1 + tanh((0.15 - r) / 0.02))"  # Radial tanh
+    boundary:
+      type: periodic
+
+solver:
+  type: upwind  # auto-selects upwind_2d
+
+output:
+  monitors:
+    - type: console
+      every_n_steps: 200
+    - type: gif
+      every_n_steps: 100   # 20 frames
+      field: alpha</code></pre>
+
                     <h3>Running the Examples</h3>
                     <pre><code># From the repo root:
 python run.py unit_tests/tanh_one_rev_no_sharpening.yaml
-python run.py unit_tests/tanh_one_rev_cl_sharpening.yaml</code></pre>
+python run.py unit_tests/tanh_one_rev_cl_sharpening.yaml
+python run.py unit_tests/tanh_circle_5_rev_no_sharpening.yaml</code></pre>
 
                     <h2>Tips</h2>
                     <ul>
                         <li><strong>CFL warning:</strong> If CFL &gt; 1, a warning is printed. Reduce <code>dt</code> or increase <code>n_points</code>.</li>
                         <li><strong>10-frame GIF:</strong> For 200 steps, use <code>every_n_steps: 20</code> to get 10 frames.</li>
                         <li><strong>Combining monitors:</strong> You can use multiple monitors (e.g., console + gif + hdf5) in one run.</li>
+                        <li><strong>2D auto-selection:</strong> When a 2D domain is specified, the framework automatically selects the 2D version of solvers (<code>upwind_2d</code>) and sharpening methods (<code>pm_2d</code>, <code>cl_2d</code>).</li>
+                        <li><strong>2D GIF output:</strong> For 2D fields, the GIF monitor produces pcolormesh visualizations instead of line plots.</li>
                     </ul>
                 </div>
             </div>

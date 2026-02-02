@@ -30,7 +30,7 @@
                     <p>Short run exercising the <strong>txt</strong> and <strong>curve</strong> monitors. Output: columnar snapshot_*.txt and alpha_*.curve (x, value) files.</p>
                     <h3>How to run</h3>
                     <pre><code>python run.py unit_tests/test_txt_curve.yaml</code></pre>
-                    <p>Before the first run, the YAML lives in <code>unit_tests/</code>; after a run it is moved into the timestamped run folder.</p>
+                    <p>The YAML lives in <code>unit_tests/</code>; each run copies it into the timestamped run folder (original remains for easy re-running).</p>
                     <h3>Config summary</h3>
                     <ul>
                         <li><strong>Domain:</strong> x ∈ [-0.5, 0.5], 20 points</li>

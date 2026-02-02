@@ -49,36 +49,6 @@ pip install -r requirements.txt
 # Run a simulation
 python run.py config.yaml</code></pre>
 
-                    <h3>Example Config</h3>
-                    <pre><code>domain:
-  x_min: -0.5
-  x_max: 0.5
-  n_points: 100
-
-time:
-  dt: 0.01
-  n_steps: 200
-
-velocity: [0.5]
-
-fields:
-  - name: alpha
-    initial_condition: "0.5 * (1 + tanh(-x / 0.02))"
-    boundary:
-      type: periodic
-
-solver:
-  type: upwind
-
-timestepper:
-  type: euler
-
-output:
-  monitors:
-    - type: gif
-      every_n_steps: 20
-      field: alpha</code></pre>
-
                     <h3>Project Structure</h3>
                     <pre><code>intsharp/
 ├── run.py              # CLI entry point
@@ -101,6 +71,15 @@ output:
 │       ├── txt.py      # Columnar text
 │       └── curve.py    # Curve format
 └── unit_tests/         # Validation cases</code></pre>
+
+                    <h3 id="cite">Cite intsharp</h3>
+                    <p>BibTeX for citing the intsharp documentation and software:</p>
+                    <pre><code>@misc{marziale2026intsharp,
+  author       = {Marziale, Joseph J},
+  title        = {intsharp Webpage},
+  year         = {2026},
+  howpublished = {\url{https://intsharp.marziale.tech}}
+}</code></pre>
                 </div>
             </div>
         </main>

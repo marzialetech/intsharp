@@ -1,5 +1,5 @@
 """
-Main simulation runner.
+Main simulation runner (1D and 2D).
 """
 
 from __future__ import annotations
@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .boundary import apply_bc
+from .boundary import apply_bc, apply_bc_2d
 from .config import SimulationConfig, load_config
-from .domain import Domain1D, create_domain
+from .domain import Domain1D, Domain2D, create_domain
 from .fields import Field, create_fields
 from .registry import get_sharpening, get_solver
 
@@ -63,6 +63,11 @@ def create_monitors(
             kwargs["total_steps"] = config.time.n_steps
         elif mon_cfg.type in ("png", "pdf", "gif"):
             kwargs["field"] = mon_cfg.field
+        elif mon_cfg.type == "contour_gif":
+            kwargs["field"] = mon_cfg.field
+            kwargs["contour_level"] = mon_cfg.contour_level if mon_cfg.contour_level is not None else 0.5
+            kwargs["show_centroid"] = mon_cfg.show_centroid if mon_cfg.show_centroid is not None else False
+            kwargs["show_crosshairs"] = mon_cfg.show_crosshairs if mon_cfg.show_crosshairs is not None else False
         elif mon_cfg.type in ("txt", "curve"):
             kwargs["field"] = mon_cfg.field
             kwargs["fields"] = mon_cfg.fields
@@ -90,17 +95,35 @@ def run_simulation(config: SimulationConfig) -> dict[str, Field]:
     """
     # Create domain
     domain = create_domain(config.domain)
+    ndim = domain.ndim
 
     # Create fields
     fields = create_fields(config.fields, domain)
 
-    # Get solver
-    solver_fn = get_solver(config.solver.type)
+    # Get solver based on dimension
+    if ndim == 1:
+        solver_fn = get_solver(config.solver.type)
+    else:
+        # For 2D, use the 2D version of the solver
+        solver_type_2d = config.solver.type + "_2d"
+        try:
+            solver_fn = get_solver(solver_type_2d)
+        except KeyError:
+            # Fall back to the specified solver if no 2D version exists
+            solver_fn = get_solver(config.solver.type)
 
     # Get sharpening method if enabled
     sharpening_fn = None
     if config.sharpening and config.sharpening.enabled:
-        sharpening_fn = get_sharpening(config.sharpening.method)
+        if ndim == 1:
+            sharpening_fn = get_sharpening(config.sharpening.method)
+        else:
+            # For 2D, use the 2D version of sharpening
+            sharpening_method_2d = config.sharpening.method + "_2d"
+            try:
+                sharpening_fn = get_sharpening(sharpening_method_2d)
+            except KeyError:
+                sharpening_fn = get_sharpening(config.sharpening.method)
 
     # Create output directory
     output_dir = Path(config.output.directory)
@@ -112,43 +135,76 @@ def run_simulation(config: SimulationConfig) -> dict[str, Field]:
     # Extract parameters
     dt = config.time.dt
     n_steps = config.time.n_steps
-    velocity = config.velocity[0]  # 1D
     dx = domain.dx
+
+    if ndim == 1:
+        velocity = config.velocity[0]
+        dy = 0.0
+    else:
+        velocity = (config.velocity[0], config.velocity[1])
+        dy = domain.dy  # type: ignore
 
     # Initialize monitors
     for monitor in monitor_list:
         monitor.on_start(fields, domain)
 
-    # Time loop
+    # Output initial conditions (step 0)
     t = 0.0
+    for monitor in monitor_list:
+        monitor.on_step(0, t, fields, domain)
+
+    # Time loop
     for step in range(1, n_steps + 1):
         # Advect each field
         for name, field in fields.items():
-            # Advection step
-            new_values = solver_fn(
-                field.values,
-                velocity,
-                dx,
-                dt,
-                field.bc,
-            )
-
-            # Apply boundary conditions
-            new_values = apply_bc(new_values, field.bc, dx)
+            if ndim == 1:
+                # 1D advection
+                new_values = solver_fn(
+                    field.values,
+                    velocity,
+                    dx,
+                    dt,
+                    field.bc,
+                )
+                # Apply boundary conditions
+                new_values = apply_bc(new_values, field.bc, dx)
+            else:
+                # 2D advection
+                new_values = solver_fn(
+                    field.values,
+                    velocity,
+                    dx,
+                    dy,
+                    dt,
+                    field.bc,
+                )
+                # Apply boundary conditions
+                new_values = apply_bc_2d(new_values, field.bc, dx, dy)
 
             field.values = new_values
 
         # Sharpening post-step
         if sharpening_fn is not None and config.sharpening is not None:
             for name, field in fields.items():
-                field.values = sharpening_fn(
-                    field.values,
-                    dx,
-                    dt,
-                    config.sharpening.eps_target,
-                    config.sharpening.strength,
-                    field.bc,
-                )
+                if ndim == 1:
+                    field.values = sharpening_fn(
+                        field.values,
+                        dx,
+                        dt,
+                        config.sharpening.eps_target,
+                        config.sharpening.strength,
+                        field.bc,
+                    )
+                else:
+                    field.values = sharpening_fn(
+                        field.values,
+                        dx,
+                        dy,
+                        dt,
+                        config.sharpening.eps_target,
+                        config.sharpening.strength,
+                        field.bc,
+                    )
 
         # Update time
         t += dt

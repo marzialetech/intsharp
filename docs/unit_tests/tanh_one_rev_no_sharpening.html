@@ -30,7 +30,7 @@
                     <p>Advection only, no sharpening. Tanh-hat profile, one revolution in a periodic domain. Output: 10-frame GIF.</p>
                     <h3>How to run</h3>
                     <pre><code>python run.py unit_tests/tanh_one_rev_no_sharpening.yaml</code></pre>
-                    <p>Before the first run, the YAML lives in <code>unit_tests/</code>; after a run it is moved into the timestamped run folder.</p>
+                    <p>The YAML lives in <code>unit_tests/</code>; each run copies it into the timestamped run folder (original remains for easy re-running).</p>
                     <h3>Config summary</h3>
                     <ul>
                         <li><strong>Domain:</strong> x ∈ [-0.5, 0.5], 100 points</li>

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..domain import Domain1D
+    from ..domain import Domain
     from ..fields import Field
 
 
@@ -19,6 +19,7 @@ class Monitor(ABC):
 
     Monitors are called at each time step and decide whether to output
     based on their configuration (every_n_steps or at_times).
+    Supports both 1D and 2D domains.
     """
 
     def __init__(
@@ -81,7 +82,7 @@ class Monitor(ABC):
         step: int,
         t: float,
         fields: dict[str, "Field"],
-        domain: "Domain1D",
+        domain: "Domain",
     ) -> None:
         """
         Called at each step; output if should_output() returns True.
@@ -94,15 +95,15 @@ class Monitor(ABC):
             Current simulation time.
         fields : dict[str, Field]
             All simulation fields.
-        domain : Domain1D
-            The computational domain.
+        domain : Domain
+            The computational domain (1D or 2D).
         """
         pass
 
     def on_start(
         self,
         fields: dict[str, "Field"],
-        domain: "Domain1D",
+        domain: "Domain",
     ) -> None:
         """
         Called at simulation start. Override for setup.
@@ -111,15 +112,15 @@ class Monitor(ABC):
         ----------
         fields : dict[str, Field]
             All simulation fields.
-        domain : Domain1D
-            The computational domain.
+        domain : Domain
+            The computational domain (1D or 2D).
         """
         pass
 
     def on_end(
         self,
         fields: dict[str, "Field"],
-        domain: "Domain1D",
+        domain: "Domain",
     ) -> None:
         """
         Called at simulation end. Override for finalization.
@@ -128,7 +129,7 @@ class Monitor(ABC):
         ----------
         fields : dict[str, Field]
             All simulation fields.
-        domain : Domain1D
-            The computational domain.
+        domain : Domain
+            The computational domain (1D or 2D).
         """
         pass

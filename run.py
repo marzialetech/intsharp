@@ -5,8 +5,9 @@ CLI entry point for running simulations.
 Usage:
     python run.py config.yaml
 
-Creates a new timestamped run folder, moves the YAML into it, and writes
+Creates a new timestamped run folder, copies the YAML into it, and writes
 all monitor output (GIF, PNG, HDF5, etc.) into that same folder.
+The original YAML remains in place for easy re-running.
 """
 
 from __future__ import annotations
@@ -30,7 +31,8 @@ Examples:
 
 Creates a new run folder in the same directory as the YAML, named
 <yaml_stem>_YYYY-MM-DD_HH:MM:SS (e.g. unit_tests/tanh_one_rev_no_sharpening_2025-02-01_19:15:30),
-moves the YAML into it, and writes all outputs there.
+copies the YAML into it, and writes all outputs there. The original YAML
+remains in place for easy re-running.
         """,
     )
     parser.add_argument(
@@ -63,10 +65,10 @@ moves the YAML into it, and writes all outputs there.
         run_dir = config_path.parent / f"{config_path.stem}_{timestamp}"
         run_dir.mkdir(parents=True, exist_ok=True)
 
-        # Move the YAML into the run folder (single copy)
+        # Copy the YAML into the run folder (keep original for re-running)
         dest_yaml = run_dir / config_path.name
-        shutil.move(str(config_path), str(dest_yaml))
-        print(f"Run folder: {run_dir} (moved config to {dest_yaml.name})")
+        shutil.copy2(str(config_path), str(dest_yaml))
+        print(f"Run folder: {run_dir} (copied config to {dest_yaml.name})")
 
         # Point config output to this folder and run
         config.output.directory = str(run_dir)

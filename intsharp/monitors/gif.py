@@ -1,11 +1,11 @@
 """
-Animated GIF output monitor.
+Animated GIF output monitor (1D and 2D).
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,7 +14,7 @@ from ..registry import register_monitor
 from .base import Monitor
 
 if TYPE_CHECKING:
-    from ..domain import Domain1D
+    from ..domain import Domain1D, Domain2D, Domain
     from ..fields import Field
 
 
@@ -24,6 +24,7 @@ class GIFMonitor(Monitor):
     Animated GIF output.
 
     Accumulates frames during simulation and writes GIF at the end.
+    Supports both 1D (line plot) and 2D (pcolormesh) visualization.
     """
 
     def __init__(
@@ -41,24 +42,34 @@ class GIFMonitor(Monitor):
         self._frames: list[np.ndarray] = []
         self._times: list[float] = []
         self._domain_x: np.ndarray | None = None
+        self._domain_X: np.ndarray | None = None  # 2D meshgrid
+        self._domain_Y: np.ndarray | None = None  # 2D meshgrid
+        self._ndim: int = 1
 
     def on_start(
         self,
         fields: dict[str, "Field"],
-        domain: "Domain1D",
+        domain: "Domain",
     ) -> None:
         """Initialize and create output directory."""
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self._domain_x = domain.x.copy()
         self._frames = []
         self._times = []
+        self._ndim = domain.ndim
+
+        if domain.ndim == 1:
+            self._domain_x = domain.x.copy()
+        else:
+            # 2D domain
+            self._domain_X = domain.X.copy()  # type: ignore
+            self._domain_Y = domain.Y.copy()  # type: ignore
 
     def on_step(
         self,
         step: int,
         t: float,
         fields: dict[str, "Field"],
-        domain: "Domain1D",
+        domain: "Domain",
     ) -> None:
         """Capture frame if output is due."""
         dt = 0.001  # Approximate
@@ -78,7 +89,7 @@ class GIFMonitor(Monitor):
     def on_end(
         self,
         fields: dict[str, "Field"],
-        domain: "Domain1D",
+        domain: "Domain",
     ) -> None:
         """Create and save the GIF."""
         if not self._frames or self.field_name is None:
@@ -91,13 +102,32 @@ class GIFMonitor(Monitor):
 
         images = []
         for i, (values, t) in enumerate(zip(self._frames, self._times)):
-            fig, ax = plt.subplots(figsize=(8, 4))
-            ax.plot(self._domain_x, values, "b-", linewidth=1.5)
-            ax.set_xlabel("x")
-            ax.set_ylabel(self.field_name)
-            ax.set_title(f"{self.field_name} at t = {t:.4f}")
-            ax.set_ylim(-0.1, 1.1)
-            ax.grid(True, alpha=0.3)
+            if self._ndim == 1:
+                # 1D: line plot
+                fig, ax = plt.subplots(figsize=(8, 4))
+                ax.plot(self._domain_x, values, "b-", linewidth=1.5)
+                ax.set_xlabel("x")
+                ax.set_ylabel(self.field_name)
+                ax.set_title(f"{self.field_name} at t = {t:.4f}")
+                ax.set_ylim(-0.1, 1.1)
+                ax.grid(True, alpha=0.3)
+            else:
+                # 2D: pcolormesh
+                fig, ax = plt.subplots(figsize=(6, 6))
+                pcm = ax.pcolormesh(
+                    self._domain_X,
+                    self._domain_Y,
+                    values,
+                    cmap="viridis",
+                    vmin=0.0,
+                    vmax=1.0,
+                    shading="auto",
+                )
+                ax.set_xlabel("x")
+                ax.set_ylabel("y")
+                ax.set_title(f"{self.field_name} at t = {t:.4f}")
+                ax.set_aspect("equal")
+                fig.colorbar(pcm, ax=ax, label=self.field_name)
 
             # Render to image array
             fig.canvas.draw()
