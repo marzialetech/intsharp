@@ -36,28 +36,40 @@
                     <span class="window-title">Components</span>
                 </div>
                 <div class="window-body">
+                    <nav class="page-toc" aria-label="Page contents">
+                        <strong>Contents</strong>
+                        <ul>
+                            <li><a href="#solvers">Solvers</a></li>
+                            <li><a href="#time-integrators">Time Integrators</a></li>
+                            <li><a href="#interface-sharpening">Interface Sharpening</a></li>
+                            <li><a href="#boundary-conditions">Boundary Conditions</a></li>
+                            <li><a href="#output-monitors">Output Monitors</a></li>
+                            <li><a href="#extending-components">Extending Components</a></li>
+                        </ul>
+                    </nav>
+
                     <p>All components are registered via decorators and can be extended by adding new implementations. Each component has its own page with governing equations and file location.</p>
 
-                    <h2>Solvers</h2>
+                    <h2 id="solvers">Solvers</h2>
                     <p class="component-note">The correct 1D/2D implementation is selected automatically based on your domain.</p>
                     <ul>
                         <li><a href="component/upwind.html">upwind</a> — First-order upwind advection</li>
                     </ul>
 
-                    <h2>Time Integrators</h2>
+                    <h2 id="time-integrators">Time Integrators</h2>
                     <ul>
                         <li><a href="component/euler.html">euler</a> — Forward Euler</li>
                         <li><a href="component/rk4.html">rk4</a> — 4th-order Runge-Kutta</li>
                     </ul>
 
-                    <h2>Interface Sharpening</h2>
+                    <h2 id="interface-sharpening">Interface Sharpening</h2>
                     <p class="component-note">The correct 1D/2D implementation is selected automatically based on your domain.</p>
                     <ul>
                         <li><a href="component/pm.html">pm</a> — Parameswaran-Mandal</li>
                         <li><a href="component/cl.html">cl</a> — Chiu-Lin</li>
                     </ul>
 
-                    <h2>Boundary Conditions</h2>
+                    <h2 id="boundary-conditions">Boundary Conditions</h2>
                     <p class="component-note">The same boundary type applies to 1D (two ends) or 2D (four edges); the code applies it per edge based on domain dimension.</p>
                     <ul>
                         <li><a href="component/periodic.html">periodic</a></li>
@@ -78,7 +90,7 @@
                         <li><a href="component/curve.html">curve</a></li>
                     </ul>
 
-                    <h2>Extending Components</h2>
+                    <h2 id="extending-components">Extending Components</h2>
                     <p>New components are registered via decorators:</p>
                     <pre><code>from intsharp.registry import register_solver
 

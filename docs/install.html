@@ -37,13 +37,34 @@
                     <span class="window-title">Installation</span>
                 </div>
                 <div class="window-body">
-                    <h2>Requirements</h2>
+                    <nav class="page-toc" aria-label="Page contents">
+                        <strong>Contents</strong>
+                        <ul>
+                            <li><a href="#requirements">Requirements</a>
+                                <ul>
+                                    <li><a href="#dependencies">Dependencies</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#installation-steps">Installation Steps</a>
+                                <ul>
+                                    <li><a href="#clone">1. Clone the Repository</a></li>
+                                    <li><a href="#venv">2. Create a Virtual Environment</a></li>
+                                    <li><a href="#install-deps">3. Install Dependencies</a></li>
+                                    <li><a href="#verify">4. Verify Installation</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#first-simulation">Running Your First Simulation</a></li>
+                            <li><a href="#makefile">Makefile Targets</a></li>
+                        </ul>
+                    </nav>
+
+                    <h2 id="requirements">Requirements</h2>
                     <ul>
                         <li>Python 3.9+</li>
                         <li>pip (Python package manager)</li>
                     </ul>
 
-                    <h3>Dependencies</h3>
+                    <h3 id="dependencies">Dependencies</h3>
                     <table>
                         <thead>
                             <tr>
@@ -96,9 +117,9 @@
                         </tbody>
                     </table>
 
-                    <h2>Installation Steps</h2>
+                    <h2 id="installation-steps">Installation Steps</h2>
 
-                    <h3>1. Clone the Repository</h3>
+                    <h3 id="clone">1. Clone the Repository</h3>
                     <pre><code>git clone https://github.com/marzialetech/intsharp.git
 cd intsharp</code></pre>
 
@@ -108,7 +129,7 @@ source .venv/bin/activate   # Linux/macOS
 # or
 .venv\Scripts\activate      # Windows</code></pre>
 
-                    <h3>3. Install Dependencies</h3>
+                    <h3 id="install-deps">3. Install Dependencies</h3>
                     <pre><code>pip install -r requirements.txt</code></pre>
                     <p>Or using the Makefile:</p>
                     <pre><code>make install</code></pre>
@@ -116,11 +137,11 @@ source .venv/bin/activate   # Linux/macOS
                     <h3>4. Verify Installation</h3>
                     <pre><code>python -c "import intsharp; print('intsharp ready')"</code></pre>
 
-                    <h2>Running Your First Simulation</h2>
+                    <h2 id="first-simulation">Running Your First Simulation</h2>
                     <pre><code>python run.py unit_tests/tanh_hat_10_rev_compare.yaml</code></pre>
                     <p>This runs a 1D comparison test (no sharpening vs PM over 5 revolutions) and produces overlay and individual GIFs in a timestamped folder.</p>
 
-                    <h2>Makefile Targets</h2>
+                    <h2 id="makefile">Makefile Targets</h2>
                     <table>
                         <thead>
                             <tr>

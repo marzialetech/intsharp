@@ -168,6 +168,38 @@ html, body {
     line-height: 1.6;
 }
 
+/* Nested table of contents at top of page */
+.window-body .page-toc {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--code-bg);
+    border: 1px solid #ccc;
+    font-size: 13px;
+}
+
+.window-body .page-toc ul {
+    margin: 6px 0 0 0;
+    padding-left: 20px;
+    list-style: none;
+}
+
+.window-body .page-toc > ul {
+    padding-left: 0;
+}
+
+.window-body .page-toc ul ul {
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.window-body .page-toc li {
+    margin-bottom: 2px;
+}
+
+.window-body .page-toc a {
+    color: var(--link-color);
+}
+
 .window-body h2 {
     margin: 0 0 12px 0;
     font-size: 18px;
