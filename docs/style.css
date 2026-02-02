@@ -253,16 +253,20 @@ html, body {
     background: none;
 }
 
-/* Math blocks */
+/* Math blocks (LaTeX via KaTeX) */
 .math-block {
     background: #f8f8f8;
     border: 1px solid #ddd;
     padding: 12px;
     margin: 12px 0;
-    font-family: "Times New Roman", Times, serif;
-    font-size: 14px;
     text-align: center;
     overflow-x: auto;
+}
+
+.window-body .katex-display {
+    margin: 0.5em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 /* File path badge */

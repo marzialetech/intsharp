@@ -6,10 +6,10 @@
     <title>Components - intsharp</title>
     <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="katex-render.js"></script>
 </head>
 <body>
     <div class="app">
-        <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
                 <h1>intsharp</h1>
@@ -29,267 +29,50 @@
             </div>
         </nav>
 
-        <!-- Main content -->
         <main class="content">
             <div class="window">
                 <div class="window-header">
                     <span class="window-title">Components</span>
                 </div>
                 <div class="window-body">
-                    <p>All components are registered via decorators and can be extended by adding new implementations.</p>
+                    <p>All components are registered via decorators and can be extended by adding new implementations. Each component has its own page with governing equations and file location.</p>
 
-                    <!-- SOLVERS -->
                     <h2>Solvers</h2>
+                    <ul>
+                        <li><a href="component/upwind.html">upwind</a> — First-order upwind advection</li>
+                        <li><a href="component/upwind_vectorized.html">upwind_vectorized</a> — Vectorized upwind</li>
+                    </ul>
 
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>upwind</h4>
-                            <span class="file-path">intsharp/solvers/upwind.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p><strong>First-order upwind advection scheme.</strong></p>
-                            <p>Solves the linear advection equation:</p>
-                            <div class="math-block">
-                                &part;f/&part;t + u &middot; &part;f/&part;x = 0
-                            </div>
-                            <p>Discrete update (u &ge; 0):</p>
-                            <div class="math-block">
-                                f<sub>i</sub><sup>n+1</sup> = f<sub>i</sub><sup>n</sup> &minus; CFL &middot; (f<sub>i</sub><sup>n</sup> &minus; f<sub>i&minus;1</sub><sup>n</sup>)
-                            </div>
-                            <p>where CFL = u &middot; dt / dx. For u &lt; 0, upwind is taken from the right.</p>
-                            <p><strong>Stability:</strong> Requires CFL &le; 1.</p>
-                        </div>
-                    </div>
-
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>upwind_vectorized</h4>
-                            <span class="file-path">intsharp/solvers/upwind.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p>Same as <code>upwind</code> but uses NumPy vectorization for faster execution on large grids.</p>
-                        </div>
-                    </div>
-
-                    <!-- TIMESTEPPERS -->
                     <h2>Time Integrators</h2>
+                    <ul>
+                        <li><a href="component/euler.html">euler</a> — Forward Euler</li>
+                        <li><a href="component/rk4.html">rk4</a> — 4th-order Runge-Kutta</li>
+                    </ul>
 
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>euler</h4>
-                            <span class="file-path">intsharp/timesteppers.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p><strong>Forward Euler (explicit, first-order).</strong></p>
-                            <div class="math-block">
-                                f<sup>n+1</sup> = f<sup>n</sup> + dt &middot; RHS(f<sup>n</sup>, t<sup>n</sup>)
-                            </div>
-                            <p>Simple and fast, but only first-order accurate in time.</p>
-                        </div>
-                    </div>
-
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>rk4</h4>
-                            <span class="file-path">intsharp/timesteppers.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p><strong>4th-order Runge-Kutta.</strong></p>
-                            <div class="math-block">
-                                k<sub>1</sub> = RHS(f<sup>n</sup>, t<sup>n</sup>)<br>
-                                k<sub>2</sub> = RHS(f<sup>n</sup> + &frac12; dt &middot; k<sub>1</sub>, t<sup>n</sup> + &frac12; dt)<br>
-                                k<sub>3</sub> = RHS(f<sup>n</sup> + &frac12; dt &middot; k<sub>2</sub>, t<sup>n</sup> + &frac12; dt)<br>
-                                k<sub>4</sub> = RHS(f<sup>n</sup> + dt &middot; k<sub>3</sub>, t<sup>n</sup> + dt)<br>
-                                f<sup>n+1</sup> = f<sup>n</sup> + (dt/6)(k<sub>1</sub> + 2k<sub>2</sub> + 2k<sub>3</sub> + k<sub>4</sub>)
-                            </div>
-                            <p>Fourth-order accurate; more computationally expensive but much more accurate for smooth solutions.</p>
-                        </div>
-                    </div>
-
-                    <!-- SHARPENING -->
                     <h2>Interface Sharpening</h2>
-                    <p>Applied post-step via operator splitting. Sharpening counteracts numerical diffusion to maintain sharp interfaces.</p>
+                    <ul>
+                        <li><a href="component/pm.html">pm</a> — Parameswaran-Mandal</li>
+                        <li><a href="component/cl.html">cl</a> — Chiu-Lin / Corrective flux</li>
+                    </ul>
 
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>pm (Parameswaran-Mandal)</h4>
-                            <span class="file-path">intsharp/sharpening.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p><strong>Parameswaran-Mandal sharpening method.</strong></p>
-                            <p>RHS for the volume fraction &psi;:</p>
-                            <div class="math-block">
-                                RHS = &minus;K &middot; &psi;(1&minus;&psi;)(1&minus;2&psi;) + &epsilon; &middot; (1&minus;2&psi;) |&nabla;&psi;|
-                            </div>
-                            <p>where K &asymp; 1/(4&epsilon;<sup>2</sup>) for tanh profiles.</p>
-                            <p>Update:</p>
-                            <div class="math-block">
-                                &psi;<sup>n+1</sup> = &psi;<sup>n</sup> + dt &middot; &Gamma; &middot; RHS
-                            </div>
-                            <p><strong>Parameters:</strong></p>
-                            <ul>
-                                <li><code>eps_target</code>: Target interface thickness &epsilon;</li>
-                                <li><code>strength</code>: Sharpening strength &Gamma;</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>cl (Chiu-Lin / Corrective Flux)</h4>
-                            <span class="file-path">intsharp/sharpening.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p><strong>Chiu-Lin corrective flux sharpening.</strong></p>
-                            <p>Flux formulation:</p>
-                            <div class="math-block">
-                                q = &epsilon; &nabla;&psi; &minus; &psi;(1&minus;&psi;) n&#x302;
-                            </div>
-                            <p>where n&#x302; = &nabla;&psi; / |&nabla;&psi;| is the interface unit normal.</p>
-                            <p>RHS = &nabla; &middot; q (divergence of the flux).</p>
-                            <p>Update:</p>
-                            <div class="math-block">
-                                &psi;<sup>n+1</sup> = &psi;<sup>n</sup> + dt &middot; &Gamma; &middot; RHS
-                            </div>
-                            <p><strong>Parameters:</strong></p>
-                            <ul>
-                                <li><code>eps_target</code>: Target interface thickness &epsilon;</li>
-                                <li><code>strength</code>: Sharpening strength &Gamma;</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- BOUNDARY CONDITIONS -->
                     <h2>Boundary Conditions</h2>
+                    <ul>
+                        <li><a href="component/periodic.html">periodic</a></li>
+                        <li><a href="component/neumann.html">neumann</a></li>
+                        <li><a href="component/dirichlet.html">dirichlet</a></li>
+                    </ul>
 
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>periodic</h4>
-                            <span class="file-path">intsharp/boundary.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p><strong>Periodic boundary conditions.</strong></p>
-                            <p>Values wrap around: f[&minus;1] = f[n&minus;1], f[n] = f[0].</p>
-                            <p>Implemented via <code>np.roll</code> in solvers.</p>
-                        </div>
-                    </div>
-
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>neumann</h4>
-                            <span class="file-path">intsharp/boundary.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p><strong>Neumann (gradient) boundary conditions.</strong></p>
-                            <p>Specifies the gradient at boundaries:</p>
-                            <div class="math-block">
-                                f[0] = f[1] &minus; g<sub>L</sub> &middot; dx<br>
-                                f[&minus;1] = f[&minus;2] + g<sub>R</sub> &middot; dx
-                            </div>
-                            <p><strong>Parameters:</strong> <code>gradient_left</code>, <code>gradient_right</code></p>
-                        </div>
-                    </div>
-
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>dirichlet</h4>
-                            <span class="file-path">intsharp/boundary.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p><strong>Dirichlet (fixed value) boundary conditions.</strong></p>
-                            <p>Sets boundary values directly:</p>
-                            <div class="math-block">
-                                f[0] = v<sub>L</sub>, &nbsp; f[&minus;1] = v<sub>R</sub>
-                            </div>
-                            <p><strong>Parameters:</strong> <code>value_left</code>, <code>value_right</code></p>
-                        </div>
-                    </div>
-
-                    <!-- MONITORS -->
                     <h2>Output Monitors</h2>
-                    <p>Monitors output data at specified intervals (<code>every_n_steps</code>) or times (<code>at_times</code>).</p>
+                    <ul>
+                        <li><a href="component/console.html">console</a></li>
+                        <li><a href="component/png.html">png</a></li>
+                        <li><a href="component/pdf.html">pdf</a></li>
+                        <li><a href="component/gif.html">gif</a></li>
+                        <li><a href="component/hdf5.html">hdf5</a></li>
+                        <li><a href="component/txt.html">txt</a></li>
+                        <li><a href="component/curve.html">curve</a></li>
+                    </ul>
 
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>console</h4>
-                            <span class="file-path">intsharp/monitors/console.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p>Displays a <code>tqdm</code> progress bar in the terminal. No file output.</p>
-                        </div>
-                    </div>
-
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>png / pdf</h4>
-                            <span class="file-path">intsharp/monitors/image.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p>Saves field snapshots as PNG or PDF images.</p>
-                            <p><strong>Output:</strong> <code>{field}_{frame:05d}.png</code> or <code>.pdf</code></p>
-                            <p><strong>Parameters:</strong> <code>field</code> (which field to plot)</p>
-                        </div>
-                    </div>
-
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>gif</h4>
-                            <span class="file-path">intsharp/monitors/gif.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p>Creates an animated GIF from field snapshots.</p>
-                            <p><strong>Output:</strong> <code>{field}.gif</code></p>
-                            <p><strong>Parameters:</strong> <code>field</code></p>
-                        </div>
-                    </div>
-
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>hdf5</h4>
-                            <span class="file-path">intsharp/monitors/hdf5.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p>Saves field data to HDF5 format for post-processing.</p>
-                            <p><strong>Output:</strong> <code>simulation.h5</code> with datasets for each field and time.</p>
-                            <p><strong>Parameters:</strong> <code>fields</code> (list of field names)</p>
-                        </div>
-                    </div>
-
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>txt</h4>
-                            <span class="file-path">intsharp/monitors/txt.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p>Writes columnar text files with header.</p>
-                            <p><strong>Output:</strong> <code>snapshot_{frame:05d}.txt</code></p>
-                            <p><strong>Format:</strong></p>
-                            <pre><code># step=100 t=1.000000e+00
-# x alpha
--5.000000e-01   4.025900e-02
--4.473684e-01   2.204259e-01
-...</code></pre>
-                            <p><strong>Parameters:</strong> <code>field</code> or <code>fields</code></p>
-                        </div>
-                    </div>
-
-                    <div class="component-card">
-                        <div class="component-card-header">
-                            <h4>curve</h4>
-                            <span class="file-path">intsharp/monitors/curve.py</span>
-                        </div>
-                        <div class="component-card-body">
-                            <p>Writes simple curve files (x, y) with no header.</p>
-                            <p><strong>Output:</strong> <code>{field}_{frame:05d}.curve</code></p>
-                            <p><strong>Format:</strong></p>
-                            <pre><code>-5.000000e-01   4.025900e-02
--4.473684e-01   2.204259e-01
-...</code></pre>
-                            <p><strong>Parameters:</strong> <code>field</code> or <code>fields</code></p>
-                        </div>
-                    </div>
-
-                    <!-- REGISTRY -->
                     <h2>Extending Components</h2>
                     <p>New components are registered via decorators:</p>
                     <pre><code>from intsharp.registry import register_solver

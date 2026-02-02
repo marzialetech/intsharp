@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>periodic - intsharp</title>
+    <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <script src="../katex-render.js"></script>
+</head>
+<body>
+    <div class="app">
+        <nav class="sidebar">
+            <div class="sidebar-header"><h1>intsharp</h1><span class="version">v1.0</span></div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search..." autocomplete="off"></div>
+            <ul class="nav-list" id="nav-list">
+                <li><a href="../index.html" data-page="home">Home</a></li>
+                <li><a href="../install.html" data-page="install">Installation</a></li>
+                <li><a href="../guide.html" data-page="guide">Running Simulations</a></li>
+                <li><a href="../components.html" class="active" data-page="components">Components</a></li>
+            </ul>
+            <div class="sidebar-footer"><a href="https://github.com/marzialetech/intsharp" target="_blank">GitHub</a></div>
+        </nav>
+        <main class="content">
+            <div class="window">
+                <div class="window-header"><span class="window-title">periodic</span></div>
+                <div class="window-body">
+                    <p><a href="../components.html">&larr; Components</a></p>
+                    <div class="file-path">intsharp/boundary.py</div>
+                    <h2>Periodic boundary conditions</h2>
+                    <p>Values wrap around:</p>
+                    <div class="math-block">\[ f_{-1} = f_{N-1}, \qquad f_N = f_0 \]</div>
+                    <p>Implemented via <code>np.roll</code> in solvers.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../search.js"></script>
+</body>
+</html>

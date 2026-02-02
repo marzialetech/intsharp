@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>txt - intsharp</title>
+    <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <script src="../katex-render.js"></script>
+</head>
+<body>
+    <div class="app">
+        <nav class="sidebar">
+            <div class="sidebar-header"><h1>intsharp</h1><span class="version">v1.0</span></div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search..." autocomplete="off"></div>
+            <ul class="nav-list" id="nav-list">
+                <li><a href="../index.html" data-page="home">Home</a></li>
+                <li><a href="../install.html" data-page="install">Installation</a></li>
+                <li><a href="../guide.html" data-page="guide">Running Simulations</a></li>
+                <li><a href="../components.html" class="active" data-page="components">Components</a></li>
+            </ul>
+            <div class="sidebar-footer"><a href="https://github.com/marzialetech/intsharp" target="_blank">GitHub</a></div>
+        </nav>
+        <main class="content">
+            <div class="window">
+                <div class="window-header"><span class="window-title">txt</span></div>
+                <div class="window-body">
+                    <p><a href="../components.html">&larr; Components</a></p>
+                    <div class="file-path">intsharp/monitors/txt.py</div>
+                    <h2>Plain-text columnar monitor</h2>
+                    <p>Writes columnar text files with header.</p>
+                    <p><strong>Output:</strong> <code>snapshot_{frame:05d}.txt</code></p>
+                    <p><strong>Format:</strong></p>
+                    <pre><code># step=100 t=1.000000e+00
+# x alpha
+-5.000000e-01   4.025900e-02
+-4.473684e-01   2.204259e-01
+...</code></pre>
+                    <p><strong>Parameters:</strong> <code>field</code> or <code>fields</code></p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../search.js"></script>
+</body>
+</html>
