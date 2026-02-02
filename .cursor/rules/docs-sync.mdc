@@ -1,0 +1,13 @@
+---
+description: Keep docs in sync with code changes
+alwaysApply: true
+---
+
+# Docs Sync
+
+When you change or add code in this project, update the documentation to match.
+
+- **Code** includes: `intsharp/`, `run.py`, `Makefile`, `requirements.txt`, `unit_tests/` (configs and structure).
+- **Docs** live in `docs/`: site at intsharp.marziale.tech (Installation, Running Simulations, Components, component pages).
+- Update the relevant doc pages: install (deps, steps), guide (YAML, examples), components overview, and **individual component pages** (math, file paths, parameters) when that component changes.
+- Keep the docs minimal and faithful to the current code and UI style.
