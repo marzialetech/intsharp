@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>contour_compare_gif - intsharp</title>
+    <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <div class="app">
+        <nav class="sidebar">
+            <div class="sidebar-header"><h1>intsharp</h1><span class="version">v1.0</span></div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search..." autocomplete="off"></div>
+            <ul class="nav-list" id="nav-list">
+                <li><a href="../index.html" data-page="home">Home</a></li>
+                <li><a href="../install.html" data-page="install">Installation</a></li>
+                <li><a href="../guide.html" data-page="guide">Running Simulations</a></li>
+                <li><a href="../components.html" class="active" data-page="components">Components</a></li>
+                <li><a href="../unit-tests.html" data-page="unit-tests">Unit Tests</a></li>
+            </ul>
+            <div class="sidebar-footer"><a href="https://github.com/marzialetech/intsharp" target="_blank">GitHub</a></div>
+        </nav>
+        <main class="content">
+            <div class="window">
+                <div class="window-header"><span class="window-title">contour_compare_gif</span></div>
+                <div class="window-body">
+                    <p><a href="../components.html">&larr; Components</a></p>
+                    <h2>Contour Compare GIF Monitor (2D only)</h2>
+                    <p>Creates an animated GIF comparing contour lines of multiple 2D fields on the same plot. Each field can have its own contour levels, color, and line style.</p>
+                    
+                    <h3>YAML Configuration</h3>
+                    <pre><code>monitors:
+  - type: contour_compare_gif
+    every_n_steps: 20
+    compare_fields:
+      - field: alpha_no_sharp
+        contour_levels: [0.5]       # default [0.5]
+        color: blue                  # auto-assigned if omitted
+        linestyle: "-"               # default "-"
+      - field: alpha_pm
+        contour_levels: [0.25, 0.5, 0.75]
+        color: red
+        linestyle: "--"</code></pre>
+
+                    <h3>Parameters</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>compare_fields</code></td><td>list</td><td>required</td><td>List of field configurations (see below)</td></tr>
+                            <tr><td><code>every_n_steps</code></td><td>int</td><td>—</td><td>Output frequency</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>compare_fields entry</h4>
+                    <table>
+                        <thead>
+                            <tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>field</code></td><td>string</td><td>required</td><td>Field name</td></tr>
+                            <tr><td><code>contour_levels</code></td><td>list[float]</td><td>[0.5]</td><td>Contour levels to draw</td></tr>
+                            <tr><td><code>color</code></td><td>string</td><td>auto</td><td>Line color (matplotlib color)</td></tr>
+                            <tr><td><code>linestyle</code></td><td>string</td><td>"-"</td><td>Line style ("-", "--", ":", "-.")</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Output</h3>
+                    <p>Saves <code>contour_compare.gif</code> to the run folder.</p>
+
+                    <h3>Use with per-field sharpening</h3>
+                    <p>Combine with per-field sharpening control to compare sharpened vs non-sharpened fields:</p>
+                    <pre><code>fields:
+  - name: alpha_no_sharp
+    sharpening: false
+  - name: alpha_pm
+    sharpening: true</code></pre>
+
+                    <div class="file-path">intsharp/monitors/contour_compare_gif.py</div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../search.js"></script>
+</body>
+</html>

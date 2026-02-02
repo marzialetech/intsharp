@@ -68,6 +68,18 @@ def create_monitors(
             kwargs["contour_level"] = mon_cfg.contour_level if mon_cfg.contour_level is not None else 0.5
             kwargs["show_centroid"] = mon_cfg.show_centroid if mon_cfg.show_centroid is not None else False
             kwargs["show_crosshairs"] = mon_cfg.show_crosshairs if mon_cfg.show_crosshairs is not None else False
+        elif mon_cfg.type == "contour_compare_gif":
+            # Convert CompareFieldConfig objects to dicts for the monitor
+            if mon_cfg.compare_fields:
+                kwargs["compare_fields"] = [
+                    {
+                        "field": cf.field,
+                        "contour_levels": cf.contour_levels,
+                        "color": cf.color,
+                        "linestyle": cf.linestyle,
+                    }
+                    for cf in mon_cfg.compare_fields
+                ]
         elif mon_cfg.type in ("txt", "curve"):
             kwargs["field"] = mon_cfg.field
             kwargs["fields"] = mon_cfg.fields
@@ -112,9 +124,21 @@ def run_simulation(config: SimulationConfig) -> dict[str, Field]:
             # Fall back to the specified solver if no 2D version exists
             solver_fn = get_solver(config.solver.type)
 
-    # Get sharpening method if enabled
+    # Get sharpening method if needed
+    # Sharpening is needed if: global enabled OR any field has per-field sharpening=True
     sharpening_fn = None
-    if config.sharpening and config.sharpening.enabled:
+    needs_sharpening = False
+    if config.sharpening:
+        if config.sharpening.enabled:
+            needs_sharpening = True
+        else:
+            # Check if any field has per-field sharpening enabled
+            for field_cfg in config.fields:
+                if field_cfg.sharpening is True:
+                    needs_sharpening = True
+                    break
+
+    if needs_sharpening and config.sharpening:
         if ndim == 1:
             sharpening_fn = get_sharpening(config.sharpening.method)
         else:
@@ -184,27 +208,40 @@ def run_simulation(config: SimulationConfig) -> dict[str, Field]:
             field.values = new_values
 
         # Sharpening post-step
-        if sharpening_fn is not None and config.sharpening is not None:
+        # Per-field sharpening: field.sharpening_enabled can override global setting
+        if config.sharpening is not None:
             for name, field in fields.items():
-                if ndim == 1:
-                    field.values = sharpening_fn(
-                        field.values,
-                        dx,
-                        dt,
-                        config.sharpening.eps_target,
-                        config.sharpening.strength,
-                        field.bc,
-                    )
+                # Determine if sharpening should be applied to this field
+                if field.sharpening_enabled is True:
+                    # Per-field override: force sharpening on
+                    apply_sharpening = True
+                elif field.sharpening_enabled is False:
+                    # Per-field override: force sharpening off
+                    apply_sharpening = False
                 else:
-                    field.values = sharpening_fn(
-                        field.values,
-                        dx,
-                        dy,
-                        dt,
-                        config.sharpening.eps_target,
-                        config.sharpening.strength,
-                        field.bc,
-                    )
+                    # Use global setting
+                    apply_sharpening = config.sharpening.enabled and sharpening_fn is not None
+
+                if apply_sharpening and sharpening_fn is not None:
+                    if ndim == 1:
+                        field.values = sharpening_fn(
+                            field.values,
+                            dx,
+                            dt,
+                            config.sharpening.eps_target,
+                            config.sharpening.strength,
+                            field.bc,
+                        )
+                    else:
+                        field.values = sharpening_fn(
+                            field.values,
+                            dx,
+                            dy,
+                            dt,
+                            config.sharpening.eps_target,
+                            config.sharpening.strength,
+                            field.bc,
+                        )
 
         # Update time
         t += dt

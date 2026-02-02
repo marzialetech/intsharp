@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>contour_gif - intsharp</title>
+    <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <div class="app">
+        <nav class="sidebar">
+            <div class="sidebar-header"><h1>intsharp</h1><span class="version">v1.0</span></div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search..." autocomplete="off"></div>
+            <ul class="nav-list" id="nav-list">
+                <li><a href="../index.html" data-page="home">Home</a></li>
+                <li><a href="../install.html" data-page="install">Installation</a></li>
+                <li><a href="../guide.html" data-page="guide">Running Simulations</a></li>
+                <li><a href="../components.html" class="active" data-page="components">Components</a></li>
+                <li><a href="../unit-tests.html" data-page="unit-tests">Unit Tests</a></li>
+            </ul>
+            <div class="sidebar-footer"><a href="https://github.com/marzialetech/intsharp" target="_blank">GitHub</a></div>
+        </nav>
+        <main class="content">
+            <div class="window">
+                <div class="window-header"><span class="window-title">contour_gif</span></div>
+                <div class="window-body">
+                    <p><a href="../components.html">&larr; Components</a></p>
+                    <h2>Contour GIF Monitor (2D only)</h2>
+                    <p>Creates an animated GIF showing contour lines of a 2D field. Optionally displays the center of mass (centroid) and crosshairs through the centroid.</p>
+                    
+                    <h3>YAML Configuration</h3>
+                    <pre><code>monitors:
+  - type: contour_gif
+    every_n_steps: 20
+    field: alpha
+    contour_level: 0.5      # default 0.5
+    show_centroid: true     # show centroid marker
+    show_crosshairs: true   # show crosshair lines through centroid</code></pre>
+
+                    <h3>Parameters</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>field</code></td><td>string</td><td>required</td><td>Field name to visualize</td></tr>
+                            <tr><td><code>contour_level</code></td><td>float</td><td>0.5</td><td>Contour level to draw</td></tr>
+                            <tr><td><code>show_centroid</code></td><td>bool</td><td>false</td><td>Show center of mass marker</td></tr>
+                            <tr><td><code>show_crosshairs</code></td><td>bool</td><td>false</td><td>Show crosshair lines through centroid</td></tr>
+                            <tr><td><code>every_n_steps</code></td><td>int</td><td>—</td><td>Output frequency</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Output</h3>
+                    <p>Saves <code>{field}_contour.gif</code> to the run folder.</p>
+
+                    <div class="file-path">intsharp/monitors/contour_gif.py</div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../search.js"></script>
+</body>
+</html>

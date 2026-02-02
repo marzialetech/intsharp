@@ -139,6 +139,10 @@ class FieldConfig(BaseModel):
         ..., description="Expression for initial condition (uses 'x' for 1D, 'x', 'y', 'r' for 2D)"
     )
     boundary: BoundaryConfig = Field(..., description="Boundary condition")
+    sharpening: Optional[bool] = Field(
+        None,
+        description="Enable sharpening for this field (overrides global setting if specified)"
+    )
 
 
 class SolverConfig(BaseModel):
@@ -163,9 +167,20 @@ class SharpeningConfig(BaseModel):
     strength: float = Field(1.0, gt=0, description="Sharpening strength (Gamma)")
 
 
+class CompareFieldConfig(BaseModel):
+    """Configuration for a single field in contour_compare_gif monitor."""
+    field: str = Field(..., description="Field name to plot")
+    contour_levels: list[float] = Field(
+        default_factory=lambda: [0.5],
+        description="Contour levels to draw (default [0.5])"
+    )
+    color: Optional[str] = Field(None, description="Line color (auto-assigned if not specified)")
+    linestyle: str = Field("-", description="Line style (e.g., '-', '--', ':')")
+
+
 class MonitorConfig(BaseModel):
     """Output monitor configuration."""
-    type: Literal["console", "png", "pdf", "gif", "contour_gif", "hdf5", "txt", "curve"] = Field(
+    type: Literal["console", "png", "pdf", "gif", "contour_gif", "contour_compare_gif", "hdf5", "txt", "curve"] = Field(
         ..., description="Monitor type"
     )
     every_n_steps: Optional[int] = Field(
@@ -190,6 +205,10 @@ class MonitorConfig(BaseModel):
     show_crosshairs: Optional[bool] = Field(
         False, description="Show crosshair lines through centroid (for contour_gif)"
     )
+    # Contour compare GIF options
+    compare_fields: Optional[list[CompareFieldConfig]] = Field(
+        None, description="Fields to compare (for contour_compare_gif)"
+    )
 
     @model_validator(mode="after")
     def validate_output_trigger(self) -> "MonitorConfig":
@@ -197,6 +216,15 @@ class MonitorConfig(BaseModel):
             if self.type != "console":
                 raise ValueError(
                     f"Monitor '{self.type}' requires 'every_n_steps' or 'at_times'"
+                )
+        return self
+
+    @model_validator(mode="after")
+    def validate_compare_fields(self) -> "MonitorConfig":
+        if self.type == "contour_compare_gif":
+            if not self.compare_fields or len(self.compare_fields) < 1:
+                raise ValueError(
+                    "contour_compare_gif requires 'compare_fields' with at least one field"
                 )
         return self
 

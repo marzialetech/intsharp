@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tanh_circle_10_rev_compare - intsharp</title>
+    <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <div class="app">
+        <nav class="sidebar">
+            <div class="sidebar-header"><h1>intsharp</h1><span class="version">v1.0</span></div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search..." autocomplete="off"></div>
+            <ul class="nav-list" id="nav-list">
+                <li><a href="../index.html" data-page="home">Home</a></li>
+                <li><a href="../install.html" data-page="install">Installation</a></li>
+                <li><a href="../guide.html" data-page="guide">Running Simulations</a></li>
+                <li><a href="../components.html" data-page="components">Components</a></li>
+                <li><a href="../unit-tests.html" class="active" data-page="unit-tests">Unit Tests</a></li>
+            </ul>
+            <div class="sidebar-footer"><a href="https://github.com/marzialetech/intsharp" target="_blank">GitHub</a></div>
+        </nav>
+        <main class="content">
+            <div class="window">
+                <div class="window-header"><span class="window-title">tanh_circle_10_rev_compare</span></div>
+                <div class="window-body">
+                    <p><a href="../unit-tests.html">&larr; Unit Tests</a></p>
+                    <h2>Description</h2>
+                    <p>Compares no sharpening vs PM sharpening over 10 revolutions using the <code>contour_compare_gif</code> monitor and <strong>per-field sharpening control</strong>. Two fields share the same initial condition but only one has sharpening enabled.</p>
+                    
+                    <h3>How to run</h3>
+                    <pre><code>python run.py unit_tests/tanh_circle_10_rev_compare.yaml</code></pre>
+                    <p>The YAML lives in <code>unit_tests/</code>; each run copies it into the timestamped run folder (original remains for easy re-running).</p>
+                    
+                    <h3>Config summary</h3>
+                    <ul>
+                        <li><strong>Domain:</strong> 2D cell-centered, x,y ∈ [-0.5, 0.5], 100×100 points (dx = dy = 0.01)</li>
+                        <li><strong>Time:</strong> dt = 0.01, 2000 steps (T = 20 s, 10 revolutions)</li>
+                        <li><strong>CFL:</strong> 0.5</li>
+                        <li><strong>Velocity:</strong> (0.5, 0.0)</li>
+                        <li><strong>Fields:</strong>
+                            <ul>
+                                <li><code>alpha_no_sharp</code>: radial tanh, <strong>sharpening: false</strong></li>
+                                <li><code>alpha_pm</code>: radial tanh, <strong>sharpening: true</strong> (PM)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Solver:</strong> upwind_2d; <strong>Timestepper:</strong> euler</li>
+                        <li><strong>Sharpening:</strong> PM, eps_target 0.02, strength 1.0 (per-field control)</li>
+                        <li><strong>Monitors:</strong> console, contour_compare_gif (every 200 = 11 frames), individual GIFs</li>
+                    </ul>
+                    
+                    <h3>Key features demonstrated</h3>
+                    <ul>
+                        <li><strong>Per-field sharpening:</strong> Each field can override the global sharpening setting with <code>sharpening: true/false</code></li>
+                        <li><strong>contour_compare_gif:</strong> Overlays contour lines of multiple fields on the same plot</li>
+                    </ul>
+                    
+                    <h3>Output</h3>
+                    <p>Contour comparison GIF (11 frames, 1 per revolution). Blue solid = no sharpening, red dashed = PM sharpening.</p>
+                    <p><img src="tanh_circle_10_rev_compare/contour_compare.gif" alt="contour_compare.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="11" data-fps="10" data-pause="3"></p>
+                    
+                    <h4>Individual field GIFs</h4>
+                    <p><strong>No sharpening (alpha_no_sharp):</strong></p>
+                    <p><img src="tanh_circle_10_rev_compare/alpha_no_sharp.gif" alt="alpha_no_sharp.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="11" data-fps="10" data-pause="3"></p>
+                    
+                    <p><strong>PM sharpening (alpha_pm):</strong></p>
+                    <p><img src="tanh_circle_10_rev_compare/alpha_pm.gif" alt="alpha_pm.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="11" data-fps="10" data-pause="3"></p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../search.js"></script>
+    <script src="../gif-loop.js"></script>
+</body>
+</html>
