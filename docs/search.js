@@ -4,16 +4,16 @@ const searchIndex = [
     { title: 'Home', url: 'index.html', keywords: 'home overview introduction features quick start' },
     { title: 'Installation', url: 'install.html', keywords: 'install setup pip requirements dependencies python' },
     { title: 'Running Simulations', url: 'guide.html', keywords: 'run simulation yaml config example tutorial guide per-field sharpening contour compare' },
-    { title: 'Components', url: 'components.html', keywords: 'components solver upwind upwind_2d 2d timestepper euler rk4 sharpening pm pm_2d cl cl_2d boundary periodic neumann dirichlet monitor console png gif hdf5 txt curve contour_gif contour_compare_gif' },
+    { title: 'Components', url: 'components.html', keywords: 'components solver upwind timestepper euler rk4 sharpening pm cl boundary periodic neumann dirichlet monitor console png pdf svg gif mp4 hdf5 txt curve compare compare_fields' },
     { title: 'Unit Tests', url: 'unit-tests.html', keywords: 'unit test validation tanh tanh_circle 2d sharpening gif txt curve output circle radial revolution compare per-field' },
 ];
 
 const contentIndex = {
     'index.html': 'intsharp modular yaml simulation framework 1d 2d interface advection sharpening pydantic validation upwind euler rk4 pm cl periodic neumann dirichlet console png pdf gif hdf5 txt curve registry contour compare',
     'install.html': 'install installation clone git pip requirements numpy matplotlib scipy pydantic pyyaml tqdm h5py imageio python virtual environment venv',
-    'guide.html': 'running simulation yaml config configuration domain time velocity fields initial condition boundary solver timestepper sharpening output monitors tanh hat advection revolution unit test validation example 2d circle per-field sharpening contour_gif contour_compare_gif compare centroid crosshairs',
-    'components.html': 'upwind upwind_2d advection solver euler rk4 runge kutta timestepper pm pm_2d parameswaran mandal cl cl_2d chiu lin sharpening periodic neumann dirichlet boundary condition console progress png pdf image gif animation hdf5 data txt text curve output monitor gradient divergence cfl courant 2d meshgrid pcolormesh contour_gif contour_compare_gif centroid crosshairs compare',
-    'unit-tests.html': 'unit test validation tanh five rev cfl05 no sharpening pm cl sharpening tanh_circle 2d circle radial revolution periodic domain cell-centered cfl gif compare 10_rev per-field contour_compare_gif'
+    'guide.html': 'running simulation yaml config configuration domain time velocity fields initial condition boundary solver timestepper sharpening output monitors tanh hat advection revolution unit test validation example 2d circle per-field sharpening gif compare compare_fields',
+    'components.html': 'upwind advection solver euler rk4 runge kutta timestepper pm parameswaran mandal cl chiu lin sharpening periodic neumann dirichlet boundary condition console progress png pdf svg vector image gif mp4 video animation hdf5 data txt text curve output monitor gradient divergence cfl courant 1d 2d meshgrid pcolormesh contour compare compare_fields',
+    'unit-tests.html': 'unit test validation tanh compare tanh_hat 10_rev tanh_circle 2d circle radial revolution periodic domain cell-centered cfl gif compare compare_fields per-field 1d'
 };
 
 document.addEventListener('DOMContentLoaded', function() {

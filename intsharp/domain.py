@@ -142,13 +142,15 @@ def create_domain(config: DomainConfig) -> Domain:
             x_max=config.x_max,
         )
     else:
-        # 2D domain
+        # 2D domain: cell-centered so dx = Lx/nx, dy = Ly/ny and CFL=1 gives exact return
         nx = config.nx
         ny = config.ny
-        x = np.linspace(config.x_min, config.x_max, nx)
-        y = np.linspace(config.y_min, config.y_max, ny)  # type: ignore
-        dx = x[1] - x[0] if nx > 1 else config.x_max - config.x_min
-        dy = y[1] - y[0] if ny > 1 else config.y_max - config.y_min  # type: ignore
+        Lx = config.x_max - config.x_min
+        Ly = config.y_max - config.y_min  # type: ignore
+        dx = Lx / nx if nx > 0 else Lx
+        dy = Ly / ny if ny > 0 else Ly
+        x = config.x_min + (np.arange(nx, dtype=np.float64) + 0.5) * dx
+        y = config.y_min + (np.arange(ny, dtype=np.float64) + 0.5) * dy  # type: ignore
 
         # Create meshgrid (X, Y) with indexing='xy' for standard (ny, nx) shape
         X, Y = np.meshgrid(x, y, indexing="xy")

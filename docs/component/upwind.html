@@ -29,12 +29,14 @@
                     <p><a href="../components.html">&larr; Components</a></p>
                     <div class="file-path">intsharp/solvers/upwind.py</div>
                     <h2>First-order upwind advection</h2>
+                    <p><strong>Supports:</strong> 1D and 2D (selected automatically based on domain)</p>
                     <p>Solves the linear advection equation:</p>
-                    <div class="math-block">\[ \frac{\partial f}{\partial t} + u \frac{\partial f}{\partial x} = 0 \]</div>
-                    <p>Discrete update for \( u \geq 0 \):</p>
+                    <div class="math-block">\[ \frac{\partial f}{\partial t} + \mathbf{u} \cdot \nabla f = 0 \]</div>
+                    <p>Discrete update (1D, \( u \geq 0 \)):</p>
                     <div class="math-block">\[ f_i^{n+1} = f_i^n - \text{CFL} \cdot (f_i^n - f_{i-1}^n) \]</div>
                     <p>where \( \text{CFL} = u \, \Delta t / \Delta x \). For \( u < 0 \), upwind is taken from the right.</p>
-                    <p><strong>Stability:</strong> Requires \( \text{CFL} \leq 1 \).</p>
+                    <p>In 2D, operator splitting is used to apply 1D upwind in each direction sequentially.</p>
+                    <p><strong>Stability:</strong> Requires \( \text{CFL} \leq 1 \) in each direction.</p>
                 </div>
             </div>
         </main>

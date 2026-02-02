@@ -144,6 +144,12 @@ def upwind_advect_2d(
     1. First advect in x: f* = f - cfl_x * (f - f_upwind_x)
     2. Then advect in y: f** = f* - cfl_y * (f* - f*_upwind_y)
 
+    Notes
+    -----
+    The 2D domain is cell-centered with dx = Lx/nx, dy = Ly/ny, so CFL = 1
+    in each direction gives exact integer shift and no phase drift (analogous
+    to 1D). Use dt such that u*dt/dx = 1 and v*dt/dy = 1 for exact return.
+
     Parameters
     ----------
     field_values : NDArray

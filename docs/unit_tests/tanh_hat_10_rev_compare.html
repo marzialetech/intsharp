@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tanh_circle_10_rev_compare - intsharp</title>
+    <title>tanh_hat_10_rev_compare - intsharp</title>
     <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
 </head>
@@ -23,75 +23,72 @@
         </nav>
         <main class="content">
             <div class="window">
-                <div class="window-header"><span class="window-title">tanh_circle_10_rev_compare</span></div>
+                <div class="window-header"><span class="window-title">tanh_hat_10_rev_compare</span></div>
                 <div class="window-body">
                     <p><a href="../unit-tests.html">&larr; Unit Tests</a></p>
                     <h2>Description</h2>
-                    <p>Compares no sharpening vs PM sharpening over 10 revolutions using the <code>gif</code> monitor with <code>compare_fields</code> and <strong>per-field sharpening control</strong>. Two fields share the same initial condition but only one has sharpening enabled.</p>
-                    
+                    <p>1D comparison of no sharpening vs PM sharpening over 10 revolutions using the <code>gif</code> monitor with <code>compare_fields</code> and <strong>per-field sharpening control</strong>. Two fields share the same tanh-hat initial condition; only one has sharpening enabled.</p>
+
                     <h3>How to run</h3>
-                    <pre><code>python run.py unit_tests/tanh_circle_10_rev_compare.yaml</code></pre>
+                    <pre><code>python run.py unit_tests/tanh_hat_10_rev_compare.yaml</code></pre>
                     <p>The YAML lives in <code>unit_tests/</code>; each run copies it into the timestamped run folder (original remains for easy re-running).</p>
-                    
+
                     <h3>Config summary</h3>
                     <ul>
-                        <li><strong>Domain:</strong> 2D cell-centered, x,y ∈ [-0.5, 0.5], 100×100 points (dx = dy = 0.01)</li>
+                        <li><strong>Domain:</strong> 1D cell-centered, x ∈ [-0.5, 0.5], 100 points (dx = 0.01)</li>
                         <li><strong>Time:</strong> dt = 0.01, 2000 steps (T = 20 s, 10 revolutions)</li>
                         <li><strong>CFL:</strong> 0.5</li>
-                        <li><strong>Velocity:</strong> (0.5, 0.0)</li>
+                        <li><strong>Velocity:</strong> 0.5</li>
                         <li><strong>Fields:</strong>
                             <ul>
-                                <li><code>alpha_no_sharp</code>: radial tanh, <strong>sharpening: false</strong></li>
-                                <li><code>alpha_pm</code>: radial tanh, <strong>sharpening: true</strong> (PM)</li>
+                                <li><code>alpha_no_sharp</code>: tanh-hat, <strong>sharpening: false</strong></li>
+                                <li><code>alpha_pm</code>: tanh-hat, <strong>sharpening: true</strong> (PM)</li>
                             </ul>
                         </li>
-                        <li><strong>Solver:</strong> upwind_2d; <strong>Timestepper:</strong> euler</li>
+                        <li><strong>Solver:</strong> upwind; <strong>Timestepper:</strong> euler</li>
                         <li><strong>Sharpening:</strong> PM, eps_target 0.02, strength 1.0 (per-field control)</li>
-                        <li><strong>Monitors:</strong> console, gif with compare_fields (every 20 = 101 frames), individual GIFs</li>
+                        <li><strong>Monitors:</strong> console, gif with compare_fields (every 10 = 201 frames), individual GIFs</li>
                     </ul>
 
                     <h3>Key features demonstrated</h3>
                     <ul>
-                        <li><strong>Per-field sharpening:</strong> Each field can override the global sharpening setting with <code>sharpening: true/false</code></li>
-                        <li><strong>Unified gif monitor:</strong> Using <code>compare_fields</code> overlays contour lines of multiple fields on the same plot for 2D</li>
+                        <li><strong>Per-field sharpening:</strong> Each field overrides the global sharpening with <code>sharpening: true/false</code></li>
+                        <li><strong>Unified gif monitor:</strong> Using <code>compare_fields</code> overlays multiple 1D fields on the same plot</li>
                     </ul>
-                    
+
                     <h3>Output</h3>
-                    <p>Contour comparison GIF (101 frames). Use the slider to scrub through frames. Blue solid = no sharpening, red dashed = PM sharpening.</p>
-                    <p><img src="tanh_circle_10_rev_compare/compare.gif" alt="compare.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="101" data-fps="10" data-pause="3"></p>
-                    
+                    <p>Comparison GIF (201 frames). Use the slider to scrub through frames. Blue solid = no sharpening, red dashed = PM sharpening.</p>
+                    <p><img src="tanh_hat_10_rev_compare/compare.gif" alt="compare.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="201" data-fps="10" data-pause="3"></p>
+
                     <h4>Individual field GIFs</h4>
                     <p><strong>No sharpening (alpha_no_sharp):</strong></p>
-                    <p><img src="tanh_circle_10_rev_compare/alpha_no_sharp.gif" alt="alpha_no_sharp.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="101" data-fps="10" data-pause="3"></p>
-                    
+                    <p><img src="tanh_hat_10_rev_compare/alpha_no_sharp.gif" alt="alpha_no_sharp.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="201" data-fps="10" data-pause="3"></p>
+
                     <p><strong>PM sharpening (alpha_pm):</strong></p>
-                    <p><img src="tanh_circle_10_rev_compare/alpha_pm.gif" alt="alpha_pm.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="101" data-fps="10" data-pause="3"></p>
+                    <p><img src="tanh_hat_10_rev_compare/alpha_pm.gif" alt="alpha_pm.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="201" data-fps="10" data-pause="3"></p>
 
                     <h3>Config (YAML)</h3>
-                    <pre><code># Compare sharpening vs no sharpening over 10 revolutions
+                    <pre><code># 1D comparison: no sharpening vs PM over 10 revolutions
 domain:
   x_min: -0.5
   x_max: 0.5
-  n_points_x: 100
-  y_min: -0.5
-  y_max: 0.5
-  n_points_y: 100
+  n_points: 100   # dx = 0.01
 
 time:
-  dt: 0.01
-  n_steps: 2000   # 10 revolutions at CFL=0.5
+  dt: 0.01         # CFL = 0.5
+  n_steps: 2000   # 10 revolutions = 20 s
 
-velocity: [0.5, 0.0]
+velocity: [0.5]
 
 fields:
   - name: alpha_no_sharp
-    initial_condition: "0.5 * (1 + tanh((0.15 - r) / 0.02))"
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
     boundary:
       type: periodic
     sharpening: false
 
   - name: alpha_pm
-    initial_condition: "0.5 * (1 + tanh((0.15 - r) / 0.02))"
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
     boundary:
       type: periodic
     sharpening: true
@@ -109,21 +106,19 @@ output:
   monitors:
     - type: console
     - type: gif
-      every_n_steps: 20   # 101 frames
+      every_n_steps: 10   # 201 frames
       compare_fields:
         - field: alpha_no_sharp
-          contour_levels: [0.5]
           color: blue
           linestyle: "-"
         - field: alpha_pm
-          contour_levels: [0.5]
           color: red
           linestyle: "--"
     - type: gif
-      every_n_steps: 20
+      every_n_steps: 10
       field: alpha_no_sharp
     - type: gif
-      every_n_steps: 20
+      every_n_steps: 10
       field: alpha_pm</code></pre>
                 </div>
             </div>

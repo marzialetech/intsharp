@@ -29,12 +29,13 @@
                     <p><a href="../components.html">&larr; Components</a></p>
                     <div class="file-path">intsharp/sharpening.py</div>
                     <h2>Chiu-Lin sharpening</h2>
+                    <p><strong>Supports:</strong> 1D and 2D (selected automatically based on domain)</p>
                     <p>Flux formulation:</p>
-                    <div class="math-block">\[ \mathbf{q} = \epsilon \nabla\psi - \psi(1-\psi) \hat{\mathbf{n}} \]</div>
-                    <p>where \( \hat{\mathbf{n}} = \nabla\psi / |\nabla\psi| \) is the interface unit normal.</p>
+                    <div class="math-block">\[ \mathbf{q} = \epsilon \nabla\alpha - \alpha(1-\alpha) \hat{\mathbf{n}} \]</div>
+                    <p>where \( \hat{\mathbf{n}} = \nabla\alpha / |\nabla\alpha| \) is the interface unit normal.</p>
                     <p>RHS = \( \nabla \cdot \mathbf{q} \) (divergence of the flux).</p>
                     <p>Update:</p>
-                    <div class="math-block">\[ \psi^{n+1} = \psi^n + \Delta t \cdot \Gamma \cdot \text{RHS} \]</div>
+                    <div class="math-block">\[ \alpha^{n+1} = \alpha^n + \Delta t \cdot \Gamma \cdot \text{RHS} \]</div>
                     <p><strong>Parameters:</strong></p>
                     <ul>
                         <li><code>eps_target</code>: Target interface thickness \( \epsilon \)</li>

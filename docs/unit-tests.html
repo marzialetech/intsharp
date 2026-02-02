@@ -25,26 +25,17 @@
             <div class="window">
                 <div class="window-header"><span class="window-title">Unit Tests</span></div>
                 <div class="window-body">
-                    <h2>1D Unit Tests</h2>
-                    <p>Same base case (tanh-hat, 5 revolutions, CFL = 0.5, 1D cell-centered); compare no sharpening vs PM vs CL.</p>
-                    <ul>
-                        <li><a href="unit_tests/tanh_five_rev_cfl05_no_sharpening.html">tanh_five_rev_cfl05_no_sharpening</a></li>
-                        <li><a href="unit_tests/tanh_five_rev_cfl05_pm_sharpening.html">tanh_five_rev_cfl05_pm_sharpening</a></li>
-                        <li><a href="unit_tests/tanh_five_rev_cfl05_cl_sharpening.html">tanh_five_rev_cfl05_cl_sharpening</a></li>
-                    </ul>
-
-                    <h2>2D Unit Tests</h2>
-                    <p>Same base case (tanh circle, 5 revolutions, CFL = 0.5, 2D cell-centered); compare no sharpening vs PM.</p>
-                    <ul>
-                        <li><a href="unit_tests/tanh_circle_5_rev_cfl05_no_sharpening.html">tanh_circle_5_rev_cfl05_no_sharpening</a></li>
-                        <li><a href="unit_tests/tanh_circle_5_rev_cfl05_pm_sharpening.html">tanh_circle_5_rev_cfl05_pm_sharpening</a></li>
-                    </ul>
-
                     <h2>Comparison Tests</h2>
-                    <p>Demonstrates per-field sharpening control and contour comparison visualization.</p>
+                    <p>Per-field sharpening with multiple fields overlaid in one GIF. Each test page has the full YAML and run command.</p>
                     <ul>
-                        <li><a href="unit_tests/tanh_circle_10_rev_compare.html">tanh_circle_10_rev_compare</a> — 10 revolutions, contour overlay of no sharpening vs PM</li>
+                        <li><a href="unit_tests/tanh_hat_10_rev_compare.html">tanh_hat_10_rev_compare</a> — 1D: 10 revolutions, no sharpening vs PM (curve overlay)</li>
+                        <li><a href="unit_tests/tanh_circle_10_rev_compare.html">tanh_circle_10_rev_compare</a> — 2D: 10 revolutions, no sharpening vs PM (contour overlay)</li>
                     </ul>
+
+                    <h3>Running the tests</h3>
+                    <pre><code># From the repo root:
+python run.py unit_tests/tanh_hat_10_rev_compare.yaml
+python run.py unit_tests/tanh_circle_10_rev_compare.yaml</code></pre>
                 </div>
             </div>
         </main>

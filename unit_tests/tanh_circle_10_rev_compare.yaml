@@ -1,5 +1,5 @@
 # Compare sharpening vs no sharpening over 10 revolutions
-# Uses per-field sharpening control and contour_compare_gif monitor
+# Uses per-field sharpening control and unified gif monitor (compare_fields mode)
 
 domain:
   x_min: -0.5
@@ -40,11 +40,10 @@ sharpening:
   strength: 1.0
 
 output:
-  directory: ./results/tanh_circle_10_rev_compare
   monitors:
     - type: console
-    - type: contour_compare_gif
-      every_n_steps: 200  # 1 frame per revolution
+    - type: gif
+      every_n_steps: 20   # 101 frames total
       compare_fields:
         - field: alpha_no_sharp
           contour_levels: [0.5]
@@ -56,8 +55,8 @@ output:
           linestyle: "--"
     # Also output individual GIFs for reference
     - type: gif
-      every_n_steps: 200
+      every_n_steps: 20
       field: alpha_no_sharp
     - type: gif
-      every_n_steps: 200
+      every_n_steps: 20
       field: alpha_pm

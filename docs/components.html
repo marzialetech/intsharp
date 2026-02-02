@@ -39,10 +39,9 @@
                     <p>All components are registered via decorators and can be extended by adding new implementations. Each component has its own page with governing equations and file location.</p>
 
                     <h2>Solvers</h2>
+                    <p class="component-note">The correct 1D/2D implementation is selected automatically based on your domain.</p>
                     <ul>
-                        <li><a href="component/upwind.html">upwind</a> — First-order upwind advection (1D)</li>
-                        <li><a href="component/upwind_vectorized.html">upwind_vectorized</a> — Vectorized upwind (1D)</li>
-                        <li><a href="component/upwind_2d.html">upwind_2d</a> — First-order upwind advection (2D)</li>
+                        <li><a href="component/upwind.html">upwind</a> — First-order upwind advection</li>
                     </ul>
 
                     <h2>Time Integrators</h2>
@@ -52,14 +51,14 @@
                     </ul>
 
                     <h2>Interface Sharpening</h2>
+                    <p class="component-note">The correct 1D/2D implementation is selected automatically based on your domain.</p>
                     <ul>
-                        <li><a href="component/pm.html">pm</a> — Parameswaran-Mandal (1D)</li>
-                        <li><a href="component/cl.html">cl</a> — Chiu-Lin (1D)</li>
-                        <li><a href="component/pm_2d.html">pm_2d</a> — Parameswaran-Mandal (2D)</li>
-                        <li><a href="component/cl_2d.html">cl_2d</a> — Chiu-Lin (2D)</li>
+                        <li><a href="component/pm.html">pm</a> — Parameswaran-Mandal</li>
+                        <li><a href="component/cl.html">cl</a> — Chiu-Lin</li>
                     </ul>
 
                     <h2>Boundary Conditions</h2>
+                    <p class="component-note">The same boundary type applies to 1D (two ends) or 2D (four edges); the code applies it per edge based on domain dimension.</p>
                     <ul>
                         <li><a href="component/periodic.html">periodic</a></li>
                         <li><a href="component/neumann.html">neumann</a></li>
@@ -71,12 +70,12 @@
                         <li><a href="component/console.html">console</a></li>
                         <li><a href="component/png.html">png</a></li>
                         <li><a href="component/pdf.html">pdf</a></li>
-                        <li><a href="component/gif.html">gif</a></li>
+                        <li><a href="component/svg.html">svg</a></li>
+                        <li><a href="component/gif.html">gif</a> — Animated GIF (single-field or comparison)</li>
+                        <li><a href="component/mp4.html">mp4</a> — Animated MP4 video (same as gif)</li>
                         <li><a href="component/hdf5.html">hdf5</a></li>
                         <li><a href="component/txt.html">txt</a></li>
                         <li><a href="component/curve.html">curve</a></li>
-                        <li><a href="component/contour_gif.html">contour_gif</a> — Contour lines with centroid (2D)</li>
-                        <li><a href="component/contour_compare_gif.html">contour_compare_gif</a> — Compare multiple fields' contours (2D)</li>
                     </ul>
 
                     <h2>Extending Components</h2>

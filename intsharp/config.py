@@ -168,11 +168,11 @@ class SharpeningConfig(BaseModel):
 
 
 class CompareFieldConfig(BaseModel):
-    """Configuration for a single field in contour_compare_gif monitor."""
+    """Configuration for a field in compare_fields (multi-field gif overlay)."""
     field: str = Field(..., description="Field name to plot")
     contour_levels: list[float] = Field(
         default_factory=lambda: [0.5],
-        description="Contour levels to draw (default [0.5])"
+        description="Contour levels to draw for 2D contour mode (default [0.5])"
     )
     color: Optional[str] = Field(None, description="Line color (auto-assigned if not specified)")
     linestyle: str = Field("-", description="Line style (e.g., '-', '--', ':')")
@@ -180,7 +180,7 @@ class CompareFieldConfig(BaseModel):
 
 class MonitorConfig(BaseModel):
     """Output monitor configuration."""
-    type: Literal["console", "png", "pdf", "gif", "contour_gif", "contour_compare_gif", "hdf5", "txt", "curve"] = Field(
+    type: Literal["console", "png", "pdf", "svg", "gif", "mp4", "hdf5", "txt", "curve"] = Field(
         ..., description="Monitor type"
     )
     every_n_steps: Optional[int] = Field(
@@ -189,25 +189,26 @@ class MonitorConfig(BaseModel):
     at_times: Optional[list[float]] = Field(
         None, description="Output at specific times"
     )
+    # Single-field mode
     field: Optional[str] = Field(
-        None, description="Field to output (for image/gif/txt/curve)"
+        None, description="Field to output (for single-field gif/image/txt/curve)"
     )
+    # Multi-field mode (for gif: overlays multiple fields)
+    compare_fields: Optional[list[CompareFieldConfig]] = Field(
+        None, description="Fields to compare (for multi-field gif overlay)"
+    )
+    # HDF5-specific
     fields: Optional[list[str]] = Field(
         None, description="Fields to output (for hdf5)"
     )
-    # Contour GIF options
-    contour_level: Optional[float] = Field(
-        0.5, description="Contour level to draw (for contour_gif)"
+    # GIF style for 2D single-field mode
+    style: Literal["pcolormesh", "contour"] = Field(
+        "pcolormesh", description="2D single-field style: 'pcolormesh' (default) or 'contour'"
     )
-    show_centroid: Optional[bool] = Field(
-        False, description="Show center of mass marker (for contour_gif)"
-    )
-    show_crosshairs: Optional[bool] = Field(
-        False, description="Show crosshair lines through centroid (for contour_gif)"
-    )
-    # Contour compare GIF options
-    compare_fields: Optional[list[CompareFieldConfig]] = Field(
-        None, description="Fields to compare (for contour_compare_gif)"
+    # Contour levels for 2D contour mode (single-field or compare_fields)
+    contour_levels: list[float] = Field(
+        default_factory=lambda: [0.5],
+        description="Contour levels for 2D contour style (default [0.5])"
     )
 
     @model_validator(mode="after")
@@ -220,12 +221,15 @@ class MonitorConfig(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def validate_compare_fields(self) -> "MonitorConfig":
-        if self.type == "contour_compare_gif":
-            if not self.compare_fields or len(self.compare_fields) < 1:
-                raise ValueError(
-                    "contour_compare_gif requires 'compare_fields' with at least one field"
-                )
+    def validate_gif_field_mode(self) -> "MonitorConfig":
+        """For gif/mp4: exactly one of field or compare_fields must be set."""
+        if self.type in ("gif", "mp4"):
+            has_field = self.field is not None
+            has_compare = self.compare_fields is not None and len(self.compare_fields) > 0
+            if has_field and has_compare:
+                raise ValueError(f"{self.type} monitor: specify either 'field' or 'compare_fields', not both")
+            if not has_field and not has_compare:
+                raise ValueError(f"{self.type} monitor: requires 'field' or 'compare_fields'")
         return self
 
 

@@ -29,9 +29,28 @@
                     <p><a href="../components.html">&larr; Components</a></p>
                     <div class="file-path">intsharp/boundary.py</div>
                     <h2>Neumann (gradient) boundary conditions</h2>
-                    <p>Specifies the gradient at boundaries:</p>
+                    <p><strong>Supports:</strong> 1D and 2D (selected automatically based on domain)</p>
+
+                    <h3>1D</h3>
+                    <p>Specifies the normal gradient at the two boundaries:</p>
                     <div class="math-block">\[ f_0 = f_1 - g_L \cdot \Delta x, \qquad f_{N-1} = f_{N-2} + g_R \cdot \Delta x \]</div>
-                    <p><strong>Parameters:</strong> <code>gradient_left</code> \( (g_L) \), <code>gradient_right</code> \( (g_R) \)</p>
+                    <p>where \( g_L \) is the gradient at the left (outward-normal) and \( g_R \) at the right.</p>
+
+                    <h3>2D</h3>
+                    <p>The same two parameters apply to all four edges:</p>
+                    <ul>
+                        <li><strong>Left edge</strong> (x = 0): \( f_{i,0} = f_{i,1} - g_L \cdot \Delta x \)</li>
+                        <li><strong>Right edge</strong> (x = L): \( f_{i,-1} = f_{i,-2} + g_R \cdot \Delta x \)</li>
+                        <li><strong>Bottom edge</strong> (y = 0): \( f_{0,j} = f_{1,j} - g_L \cdot \Delta y \)</li>
+                        <li><strong>Top edge</strong> (y = L): \( f_{-1,j} = f_{-2,j} + g_R \cdot \Delta y \)</li>
+                    </ul>
+                    <p><code>gradient_left</code> is used for the “min” boundaries (left, bottom); <code>gradient_right</code> for the “max” boundaries (right, top).</p>
+
+                    <h3>YAML</h3>
+                    <pre><code>boundary:
+  type: neumann
+  gradient_left: 0.0
+  gradient_right: 0.0</code></pre>
                 </div>
             </div>
         </main>

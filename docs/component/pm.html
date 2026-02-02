@@ -29,11 +29,12 @@
                     <p><a href="../components.html">&larr; Components</a></p>
                     <div class="file-path">intsharp/sharpening.py</div>
                     <h2>Parameswaran-Mandal sharpening</h2>
-                    <p>RHS for the volume fraction \( \psi \):</p>
-                    <div class="math-block">\[ \text{RHS} = -K \psi(1-\psi)(1-2\psi) + \epsilon (1-2\psi) |\nabla\psi| \]</div>
+                    <p><strong>Supports:</strong> 1D and 2D (selected automatically based on domain)</p>
+                    <p>RHS for the volume fraction \( \alpha \):</p>
+                    <div class="math-block">\[ \text{RHS} = -K \alpha(1-\alpha)(1-2\alpha) + \epsilon (1-2\alpha) |\nabla\alpha| \]</div>
                     <p>where \( K = 1/(4\epsilon^2) \).</p>
                     <p>Update:</p>
-                    <div class="math-block">\[ \psi^{n+1} = \psi^n + \Delta t \cdot \Gamma \cdot \text{RHS} \]</div>
+                    <div class="math-block">\[ \alpha^{n+1} = \alpha^n + \Delta t \cdot \Gamma \cdot \text{RHS} \]</div>
                     <p><strong>Parameters:</strong></p>
                     <ul>
                         <li><code>eps_target</code>: Target interface thickness \( \epsilon \)</li>

@@ -28,10 +28,121 @@
                 <div class="window-body">
                     <p><a href="../components.html">&larr; Components</a></p>
                     <div class="file-path">intsharp/monitors/gif.py</div>
-                    <h2>Animated GIF monitor</h2>
-                    <p>Creates an animated GIF from field snapshots.</p>
-                    <p><strong>Output:</strong> <code>{field}.gif</code></p>
-                    <p><strong>Parameters:</strong> <code>field</code></p>
+                    <h2>Animated GIF Monitor</h2>
+                    <p>Creates animated GIFs from field snapshots. Supports both single-field and multi-field (comparison) modes, with different visualization options for 1D and 2D domains.</p>
+                    <p>For MP4 output, see <a href="mp4.html">mp4</a>.</p>
+
+                    <h3>Modes</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Mode</th><th>Parameter</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Single-field</td><td><code>field</code></td><td>Visualize one field</td></tr>
+                            <tr><td>Multi-field</td><td><code>compare_fields</code></td><td>Overlay multiple fields</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Visualization by Dimension</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Dimension</th><th>Single-field</th><th>Multi-field</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1D</td>
+                                <td>Line plot</td>
+                                <td>Overlaid line plots with legend</td>
+                            </tr>
+                            <tr>
+                                <td>2D</td>
+                                <td>Pcolormesh (default) or contour lines</td>
+                                <td>Overlaid contour lines</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Parameters</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>field</code></td><td>string</td><td>&mdash;</td><td>Field name (single-field mode)</td></tr>
+                            <tr><td><code>compare_fields</code></td><td>list</td><td>&mdash;</td><td>Fields to compare (multi-field mode)</td></tr>
+                            <tr><td><code>style</code></td><td>string</td><td><code>pcolormesh</code></td><td>2D single-field: <code>pcolormesh</code> or <code>contour</code></td></tr>
+                            <tr><td><code>contour_levels</code></td><td>list</td><td><code>[0.5]</code></td><td>Contour levels for 2D contour mode</td></tr>
+                            <tr><td><code>every_n_steps</code></td><td>int</td><td>&mdash;</td><td>Output frequency (steps)</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>compare_fields Options</h3>
+                    <p>Each item in <code>compare_fields</code> can specify:</p>
+                    <table>
+                        <thead>
+                            <tr><th>Key</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>field</code></td><td>string</td><td>(required)</td><td>Field name</td></tr>
+                            <tr><td><code>color</code></td><td>string</td><td>auto</td><td>Line color</td></tr>
+                            <tr><td><code>linestyle</code></td><td>string</td><td><code>-</code></td><td>Line style (<code>-</code>, <code>--</code>, <code>:</code>, etc.)</td></tr>
+                            <tr><td><code>contour_levels</code></td><td>list</td><td><code>[0.5]</code></td><td>Contour levels (2D only)</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Output</h3>
+                    <ul>
+                        <li>Single-field: <code>{field}.gif</code></li>
+                        <li>Multi-field: <code>compare.gif</code></li>
+                    </ul>
+
+                    <h3>Examples</h3>
+
+                    <h4>1D Single-field</h4>
+<pre>monitors:
+  - type: gif
+    every_n_steps: 10
+    field: alpha</pre>
+
+                    <h4>1D Multi-field Comparison</h4>
+<pre>monitors:
+  - type: gif
+    every_n_steps: 10
+    compare_fields:
+      - field: alpha_no_sharp
+        color: blue
+        linestyle: "-"
+      - field: alpha_pm
+        color: red
+        linestyle: "--"</pre>
+
+                    <h4>2D Single-field (pcolormesh)</h4>
+<pre>monitors:
+  - type: gif
+    every_n_steps: 20
+    field: alpha</pre>
+
+                    <h4>2D Single-field (contour)</h4>
+<pre>monitors:
+  - type: gif
+    every_n_steps: 20
+    field: alpha
+    style: contour
+    contour_levels: [0.25, 0.5, 0.75]</pre>
+
+                    <h4>2D Multi-field Comparison</h4>
+<pre>monitors:
+  - type: gif
+    every_n_steps: 20
+    compare_fields:
+      - field: alpha_no_sharp
+        contour_levels: [0.5]
+        color: blue
+        linestyle: "-"
+      - field: alpha_pm
+        contour_levels: [0.5]
+        color: red
+        linestyle: "--"</pre>
                 </div>
             </div>
         </main>

@@ -29,9 +29,25 @@
                     <p><a href="../components.html">&larr; Components</a></p>
                     <div class="file-path">intsharp/boundary.py</div>
                     <h2>Periodic boundary conditions</h2>
-                    <p>Values wrap around:</p>
+                    <p><strong>Supports:</strong> 1D and 2D (selected automatically based on domain)</p>
+
+                    <h3>1D</h3>
+                    <p>Values wrap around the interval:</p>
                     <div class="math-block">\[ f_{-1} = f_{N-1}, \qquad f_N = f_0 \]</div>
-                    <p>Implemented via <code>np.roll</code> in solvers.</p>
+                    <p>Implemented via <code>np.roll</code> in the solver.</p>
+
+                    <h3>2D</h3>
+                    <p>Values wrap in both directions (toroidal domain):</p>
+                    <ul>
+                        <li><strong>x:</strong> left edge connects to right edge, right to left</li>
+                        <li><strong>y:</strong> bottom edge connects to top edge, top to bottom</li>
+                    </ul>
+                    <p>Implemented via <code>np.roll</code> along each axis in the 2D solver.</p>
+
+                    <h3>YAML</h3>
+                    <pre><code>boundary:
+  type: periodic</code></pre>
+                    <p>No extra parameters; same for 1D and 2D.</p>
                 </div>
             </div>
         </main>

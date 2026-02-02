@@ -1,0 +1,54 @@
+# 1D comparison: no sharpening vs PM over 10 revolutions
+# Per-field sharpening with unified gif monitor (compare_fields mode)
+
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points: 100   # dx = 0.01
+
+time:
+  dt: 0.01         # CFL = 0.5
+  n_steps: 2000   # 10 revolutions = 20 s
+
+velocity: [0.5]
+
+fields:
+  - name: alpha_no_sharp
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary:
+      type: periodic
+    sharpening: false
+
+  - name: alpha_pm
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary:
+      type: periodic
+    sharpening: true
+
+solver:
+  type: upwind
+
+sharpening:
+  enabled: false
+  method: pm
+  eps_target: 0.02
+  strength: 1.0
+
+output:
+  monitors:
+    - type: console
+    - type: gif
+      every_n_steps: 10   # 201 frames
+      compare_fields:
+        - field: alpha_no_sharp
+          color: blue
+          linestyle: "-"
+        - field: alpha_pm
+          color: red
+          linestyle: "--"
+    - type: gif
+      every_n_steps: 10
+      field: alpha_no_sharp
+    - type: gif
+      every_n_steps: 10
+      field: alpha_pm

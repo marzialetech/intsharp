@@ -61,15 +61,14 @@ def create_monitors(
         # Add type-specific kwargs
         if mon_cfg.type == "console":
             kwargs["total_steps"] = config.time.n_steps
-        elif mon_cfg.type in ("png", "pdf", "gif"):
+        elif mon_cfg.type in ("png", "pdf", "svg"):
             kwargs["field"] = mon_cfg.field
-        elif mon_cfg.type == "contour_gif":
+        elif mon_cfg.type in ("gif", "mp4"):
+            # Unified gif/mp4: single-field or compare mode
             kwargs["field"] = mon_cfg.field
-            kwargs["contour_level"] = mon_cfg.contour_level if mon_cfg.contour_level is not None else 0.5
-            kwargs["show_centroid"] = mon_cfg.show_centroid if mon_cfg.show_centroid is not None else False
-            kwargs["show_crosshairs"] = mon_cfg.show_crosshairs if mon_cfg.show_crosshairs is not None else False
-        elif mon_cfg.type == "contour_compare_gif":
-            # Convert CompareFieldConfig objects to dicts for the monitor
+            kwargs["style"] = mon_cfg.style
+            kwargs["contour_levels"] = mon_cfg.contour_levels
+            kwargs["output_format"] = mon_cfg.type  # "gif" or "mp4"
             if mon_cfg.compare_fields:
                 kwargs["compare_fields"] = [
                     {

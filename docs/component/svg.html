@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>upwind_2d - intsharp</title>
+    <title>svg - intsharp</title>
     <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
     <script src="../katex-render.js"></script>
@@ -24,20 +24,14 @@
         </nav>
         <main class="content">
             <div class="window">
-                <div class="window-header"><span class="window-title">upwind_2d</span></div>
+                <div class="window-header"><span class="window-title">svg</span></div>
                 <div class="window-body">
                     <p><a href="../components.html">&larr; Components</a></p>
-                    <div class="file-path">intsharp/solvers/upwind.py</div>
-                    <h2>First-order upwind advection (2D)</h2>
-                    <p>Solves the 2D linear advection equation:</p>
-                    <div class="math-block">\[ \frac{\partial f}{\partial t} + u \frac{\partial f}{\partial x} + v \frac{\partial f}{\partial y} = 0 \]</div>
-                    <p>Uses dimension-by-dimension operator splitting:</p>
-                    <div class="math-block">\[ f^* = f^n - \text{CFL}_x \cdot (f^n - f^n_{\text{upwind-x}}) \]</div>
-                    <div class="math-block">\[ f^{n+1} = f^* - \text{CFL}_y \cdot (f^* - f^*_{\text{upwind-y}}) \]</div>
-                    <p>where \( \text{CFL}_x = u \, \Delta t / \Delta x \) and \( \text{CFL}_y = v \, \Delta t / \Delta y \).</p>
-                    <p>For periodic boundary conditions, upwinding uses <code>np.roll</code> along each axis.</p>
-                    <p><strong>Stability:</strong> Requires \( \max(\text{CFL}_x, \text{CFL}_y) \leq 1 \).</p>
-                    <p><strong>Note:</strong> This solver is automatically selected when a 2D domain is specified and <code>solver.type: upwind</code> is used.</p>
+                    <div class="file-path">intsharp/monitors/image.py</div>
+                    <h2>SVG image monitor</h2>
+                    <p>Saves field snapshots as SVG (Scalable Vector Graphics) images.</p>
+                    <p><strong>Output:</strong> <code>{field}_{frame:05d}.svg</code></p>
+                    <p><strong>Parameters:</strong> <code>field</code> (which field to plot)</p>
                 </div>
             </div>
         </main>

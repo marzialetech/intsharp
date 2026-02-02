@@ -48,9 +48,9 @@
                     </ol>
                     <p>Example folder structure after a run:</p>
                     <pre><code>unit_tests/
-└── tanh_five_rev_cfl05_no_sharpening_2026-02-01_21:42:01/
-    ├── tanh_five_rev_cfl05_no_sharpening.yaml   # copied config
-    └── alpha.gif                          # output</code></pre>
+└── my_config_YYYY-MM-DD_HH:MM:SS/
+    ├── my_config.yaml   # copied config
+    └── &lt;monitor outputs&gt;   # GIFs, images, etc.</code></pre>
 
                     <h2>YAML Configuration Reference</h2>
 
@@ -135,8 +135,8 @@ velocity: [0.5, 0.0]   # 2D: (u, v) advection velocity</code></pre>
   strength: 1.0    # Sharpening strength (Gamma)</code></pre>
 
                     <h3>Output Monitors</h3>
+                    <p>When you use <code>run.py</code>, output is written to the timestamped run folder (the <code>output.directory</code> in the YAML is overridden). You can omit <code>output.directory</code> from your YAML.</p>
                     <pre><code>output:
-  directory: ./results   # (overridden by run folder)
   monitors:
     - type: console      # Progress bar (no file output)
     - type: gif
@@ -228,145 +228,14 @@ velocity: [0.5, 0.0]   # 2D: (u, v) advection velocity</code></pre>
                                 <td>Compare multiple fields' contours (2D)</td>
                                 <td><code>compare_fields</code> (list of field configs with <code>contour_levels</code>, <code>color</code>, <code>linestyle</code>)</td>
                             </tr>
+                            <tr>
+                                <td><code>compare_gif</code></td>
+                                <td>Compare multiple 1D fields on one plot</td>
+                                <td><code>compare_fields</code> (list with <code>field</code>, <code>color</code>, <code>linestyle</code>)</td>
+                            </tr>
                         </tbody>
                     </table>
 
-                    <h2>Unit Test Examples</h2>
-                    <p>These validation cases are included in <code>unit_tests/</code>. The 1D tests share the same base case (tanh-hat, 5 revolutions, CFL = 0.5, cell-centered domain) and differ only by sharpening (none, PM, or CL).</p>
-
-                    <h3>Example 1: 1D Advection Without Sharpening (CFL 0.5)</h3>
-                    <p>Tanh-hat profile, 5 revolutions, CFL = 0.5, 1D cell-centered domain, no sharpening.</p>
-                    <div class="file-path">unit_tests/tanh_five_rev_cfl05_no_sharpening.yaml</div>
-                    <pre><code># Validation: CFL=0.5, 5 revolutions, periodic BC, no sharpening
-# 1D cell-centered: dx = L/n = 0.01. CFL = u*dt/dx = 0.5 => dt = 0.01.
-
-domain:
-  x_min: -0.5
-  x_max: 0.5
-  n_points: 100   # dx = 0.01
-
-time:
-  dt: 0.01         # CFL = 0.5
-  n_steps: 1000    # 5 revolutions = 10 s
-
-velocity: [0.5]
-
-fields:
-  - name: alpha
-    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
-    boundary:
-      type: periodic
-
-solver:
-  type: upwind
-
-timestepper:
-  type: euler
-
-output:
-  monitors:
-    - type: console
-      every_n_steps: 200
-    - type: gif
-      every_n_steps: 200   # 1 frame per revolution (6 frames)
-      field: alpha</code></pre>
-
-                    <h3>Example 2: 1D With PM or CL Sharpening</h3>
-                    <p>Same base case as Example 1 with Parameswaran-Mandal (PM) or Chiu-Lin (CL) sharpening enabled. Configs: <code>tanh_five_rev_cfl05_pm_sharpening.yaml</code>, <code>tanh_five_rev_cfl05_cl_sharpening.yaml</code>. Add a <code>sharpening:</code> block with <code>method: pm</code> or <code>method: cl</code>, <code>eps_target: 0.02</code>, and chosen <code>strength</code>.</p>
-
-                    <h3>Example 3: 2D Circle Advection (CFL 0.5, cell-centered)</h3>
-                    <p>A diffuse circle (radial tanh profile) advecting in the x-direction through a 2D periodic domain. Same base case: 5 revolutions, CFL = 0.5, 2D cell-centered; compare no sharpening vs PM.</p>
-                    <div class="file-path">unit_tests/tanh_circle_5_rev_cfl05_no_sharpening.yaml</div>
-                    <pre><code># Validation: 2D tanh circle, 5 revolutions, CFL=0.5, no sharpening
-# Cell-centered: dx = dy = 0.01. CFL = u*dt/dx = 0.5 => dt = 0.01.
-
-domain:
-  x_min: -0.5
-  x_max: 0.5
-  n_points_x: 100
-  y_min: -0.5
-  y_max: 0.5
-  n_points_y: 100
-
-time:
-  dt: 0.01         # CFL = 0.5
-  n_steps: 1000    # 5 revolutions = 10 s
-
-velocity: [0.5, 0.0]
-
-fields:
-  - name: alpha
-    initial_condition: "0.5 * (1 + tanh((0.15 - r) / 0.02))"
-    boundary:
-      type: periodic
-
-solver:
-  type: upwind
-
-output:
-  monitors:
-    - type: console
-      every_n_steps: 200
-    - type: gif
-      every_n_steps: 50   # 21 frames
-      field: alpha</code></pre>
-
-                    <h3>Example 4: Comparison Test (Per-Field Sharpening)</h3>
-                    <p>Demonstrates per-field sharpening control and <code>contour_compare_gif</code> monitor. Two fields with identical ICs; one sharpened, one not.</p>
-                    <div class="file-path">unit_tests/tanh_circle_10_rev_compare.yaml</div>
-                    <pre><code># Compare sharpening vs no sharpening over 10 revolutions
-fields:
-  - name: alpha_no_sharp
-    initial_condition: "0.5 * (1 + tanh((0.15 - r) / 0.02))"
-    boundary:
-      type: periodic
-    sharpening: false   # per-field override
-  - name: alpha_pm
-    initial_condition: "0.5 * (1 + tanh((0.15 - r) / 0.02))"
-    boundary:
-      type: periodic
-    sharpening: true    # per-field override
-
-sharpening:
-  enabled: false  # global disabled, per-field overrides apply
-  method: pm
-  eps_target: 0.02
-  strength: 1.0
-
-output:
-  monitors:
-    - type: contour_compare_gif
-      every_n_steps: 200
-      compare_fields:
-        - field: alpha_no_sharp
-          contour_levels: [0.5]
-          color: blue
-        - field: alpha_pm
-          contour_levels: [0.5]
-          color: red
-          linestyle: "--"</code></pre>
-
-                    <h3>Running the Examples</h3>
-                    <pre><code># From the repo root (1D CFL 0.5: no sharpening, PM, CL):
-python run.py unit_tests/tanh_five_rev_cfl05_no_sharpening.yaml
-python run.py unit_tests/tanh_five_rev_cfl05_pm_sharpening.yaml
-python run.py unit_tests/tanh_five_rev_cfl05_cl_sharpening.yaml
-# 2D circle (5 rev, CFL 0.5: no sharpening, PM):
-python run.py unit_tests/tanh_circle_5_rev_cfl05_no_sharpening.yaml
-python run.py unit_tests/tanh_circle_5_rev_cfl05_pm_sharpening.yaml
-# Comparison test (10 rev, per-field sharpening):
-python run.py unit_tests/tanh_circle_10_rev_compare.yaml</code></pre>
-
-                    <h2>Tips</h2>
-                    <ul>
-                        <li><strong>CFL warning:</strong> If CFL &gt; 1, a warning is printed. Reduce <code>dt</code> or increase <code>n_points</code>.</li>
-                        <li><strong>Phase error (drift):</strong> First-order upwind has a numerical phase error: the profile lags slightly (e.g. drifts left for u &gt; 0) over many revolutions. For 1D periodic with no phase error, use CFL = 1. The 1D domain is cell-centered with <code>dx = L/n_points</code>; use <code>dt = dx/|u|</code> and <code>n_steps = n_points</code> per revolution (e.g. 100 points ⇒ dx = 0.01, <code>dt: 0.02</code>, 100 steps/rev).</li>
-                        <li><strong>10-frame GIF:</strong> For 200 steps, use <code>every_n_steps: 20</code> to get 10 frames.</li>
-                        <li><strong>Combining monitors:</strong> You can use multiple monitors (e.g., console + gif + hdf5) in one run.</li>
-                        <li><strong>2D phase error:</strong> Same as 1D: use cell-centered 2D domain (dx = Lx/nx, dy = Ly/ny) and CFL = 1 in each direction (e.g. dt = dx/|u|, dt = dy/|v|) for exact return with no drift.</li>
-                        <li><strong>2D auto-selection:</strong> When a 2D domain is specified, the framework automatically selects the 2D version of solvers (<code>upwind_2d</code>) and sharpening methods (<code>pm_2d</code>, <code>cl_2d</code>).</li>
-                        <li><strong>2D GIF output:</strong> For 2D fields, the GIF monitor produces pcolormesh visualizations instead of line plots.</li>
-                    </ul>
                 </div>
             </div>
         </main>

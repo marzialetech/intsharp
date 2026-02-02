@@ -1,5 +1,5 @@
 """
-Image output monitors (PNG, PDF).
+Image output monitors (PNG, PDF, SVG).
 """
 
 from __future__ import annotations
@@ -96,3 +96,11 @@ class PDFMonitor(ImageMonitor):
 
     def __init__(self, **kwargs):
         super().__init__(extension="pdf", **kwargs)
+
+
+@register_monitor("svg")
+class SVGMonitor(ImageMonitor):
+    """SVG image output."""
+
+    def __init__(self, **kwargs):
+        super().__init__(extension="svg", **kwargs)

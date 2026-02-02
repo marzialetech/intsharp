@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>upwind_vectorized - intsharp</title>
+    <title>mp4 - intsharp</title>
     <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
     <script src="../katex-render.js"></script>
@@ -24,13 +24,37 @@
         </nav>
         <main class="content">
             <div class="window">
-                <div class="window-header"><span class="window-title">upwind_vectorized</span></div>
+                <div class="window-header"><span class="window-title">mp4</span></div>
                 <div class="window-body">
                     <p><a href="../components.html">&larr; Components</a></p>
-                    <div class="file-path">intsharp/solvers/upwind.py</div>
-                    <h2>Vectorized first-order upwind</h2>
-                    <p>Same as <a href="upwind.html">upwind</a> but uses NumPy vectorization for faster execution on large grids. Same governing equation:</p>
-                    <div class="math-block">\[ \frac{\partial f}{\partial t} + u \frac{\partial f}{\partial x} = 0 \]</div>
+                    <div class="file-path">intsharp/monitors/gif.py</div>
+                    <h2>Animated MP4 Monitor</h2>
+                    <p>Creates MP4 videos from field snapshots. Identical functionality to the <a href="gif.html">gif</a> monitor but outputs MP4 format instead.</p>
+                    <p><strong>Requires:</strong> ffmpeg installed on your system.</p>
+
+                    <h3>Parameters</h3>
+                    <p>Same as <a href="gif.html">gif</a> monitor.</p>
+
+                    <h3>Output</h3>
+                    <ul>
+                        <li>Single-field: <code>{field}.mp4</code></li>
+                        <li>Multi-field: <code>compare.mp4</code></li>
+                    </ul>
+
+                    <h3>Example</h3>
+<pre>monitors:
+  - type: mp4
+    every_n_steps: 10
+    field: alpha</pre>
+
+<pre>monitors:
+  - type: mp4
+    every_n_steps: 10
+    compare_fields:
+      - field: alpha_no_sharp
+        color: blue
+      - field: alpha_pm
+        color: red</pre>
                 </div>
             </div>
         </main>
