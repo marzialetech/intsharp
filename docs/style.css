@@ -1,0 +1,353 @@
+/* intsharp docs - Windows 95/97 retro style */
+
+* { box-sizing: border-box; }
+
+:root {
+    --bg-primary: #2563eb;
+    --bg-window: #c0c0c0;
+    --bg-body: #fff;
+    --text-primary: #fff;
+    --text-dark: #000;
+    --header-gradient: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+    --border-light: #dfdfdf;
+    --border-dark: #404040;
+    --border-shadow: #000;
+    --link-color: #000080;
+    --code-bg: #f0f0f0;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: "W95FA", "MS Sans Serif", "Microsoft Sans Serif", Geneva, sans-serif;
+    font-size: 14px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* App layout */
+.app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--bg-window);
+    color: var(--text-dark);
+    border-right: 2px solid var(--border-shadow);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.sidebar-header {
+    background: var(--header-gradient);
+    color: var(--text-primary);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-shadow);
+}
+
+.sidebar-header h1 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: normal;
+}
+
+.sidebar-header .version {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.search-box {
+    padding: 8px;
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.search-box input {
+    width: 100%;
+    padding: 4px 8px;
+    border: 2px solid;
+    border-color: var(--border-dark) var(--text-primary) var(--text-primary) var(--border-dark);
+    font-family: inherit;
+    font-size: 12px;
+    background: var(--bg-body);
+}
+
+.search-box input:focus {
+    outline: 1px dotted var(--text-dark);
+}
+
+.nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.nav-list li {
+    margin: 0;
+}
+
+.nav-list a {
+    display: block;
+    padding: 6px 16px;
+    color: var(--text-dark);
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.nav-list a:hover {
+    background: var(--header-gradient);
+    color: var(--text-primary);
+}
+
+.nav-list a.active {
+    background: var(--link-color);
+    color: var(--text-primary);
+}
+
+.nav-list a.search-hidden {
+    display: none;
+}
+
+.sidebar-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-dark);
+    font-size: 11px;
+}
+
+.sidebar-footer a {
+    color: var(--link-color);
+    text-decoration: underline;
+}
+
+/* Main content */
+.content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Retro window */
+.window {
+    background: var(--bg-window);
+    color: var(--text-dark);
+    border: 2px solid;
+    border-color: var(--border-light) var(--border-shadow) var(--border-shadow) var(--border-light);
+    box-shadow: 2px 2px 0 var(--border-dark);
+    width: 100%;
+    max-width: 900px;
+}
+
+.window-header {
+    background: var(--header-gradient);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border-shadow);
+}
+
+.window-title {
+    font-weight: normal;
+}
+
+.window-body {
+    padding: 16px 20px;
+    background: var(--bg-body);
+    border: 1px solid #808080;
+    margin: 2px;
+    line-height: 1.6;
+}
+
+.window-body h2 {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+    font-weight: normal;
+    color: var(--link-color);
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+}
+
+.window-body h3 {
+    margin: 20px 0 8px 0;
+    font-size: 14px;
+    font-weight: normal;
+    color: var(--text-dark);
+}
+
+.window-body h4 {
+    margin: 16px 0 6px 0;
+    font-size: 13px;
+    font-weight: normal;
+    color: var(--link-color);
+}
+
+.window-body p {
+    margin: 0 0 12px 0;
+}
+
+.window-body ul, .window-body ol {
+    margin: 0 0 12px 0;
+    padding-left: 24px;
+}
+
+.window-body li {
+    margin-bottom: 4px;
+}
+
+.window-body a {
+    color: var(--link-color);
+}
+
+.window-body code {
+    background: var(--code-bg);
+    padding: 1px 4px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 12px;
+}
+
+.window-body pre {
+    background: var(--code-bg);
+    border: 1px solid #ccc;
+    padding: 12px;
+    overflow-x: auto;
+    margin: 0 0 12px 0;
+}
+
+.window-body pre code {
+    background: none;
+    padding: 0;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* Tables */
+.window-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 12px 0;
+    font-size: 12px;
+}
+
+.window-body th, .window-body td {
+    border: 1px solid #808080;
+    padding: 6px 8px;
+    text-align: left;
+}
+
+.window-body th {
+    background: var(--bg-window);
+    font-weight: normal;
+}
+
+.window-body td code {
+    background: none;
+}
+
+/* Math blocks */
+.math-block {
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    padding: 12px;
+    margin: 12px 0;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 14px;
+    text-align: center;
+    overflow-x: auto;
+}
+
+/* File path badge */
+.file-path {
+    display: inline-block;
+    background: var(--bg-window);
+    border: 1px solid #808080;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-family: "Courier New", Courier, monospace;
+    margin-bottom: 8px;
+}
+
+/* Component card */
+.component-card {
+    border: 2px solid;
+    border-color: var(--border-light) var(--border-dark) var(--border-dark) var(--border-light);
+    margin: 16px 0;
+    background: var(--bg-body);
+}
+
+.component-card-header {
+    background: var(--bg-window);
+    padding: 6px 12px;
+    border-bottom: 1px solid #808080;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.component-card-header h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: normal;
+}
+
+.component-card-body {
+    padding: 12px;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+    .app {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        min-width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 2px solid var(--border-shadow);
+    }
+    
+    .nav-list {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 4px 8px;
+    }
+    
+    .nav-list li {
+        flex: 1 1 auto;
+    }
+    
+    .nav-list a {
+        padding: 4px 8px;
+        text-align: center;
+        font-size: 11px;
+    }
+    
+    .content {
+        padding: 12px;
+    }
+    
+    .window-body {
+        padding: 12px;
+    }
+    
+    .window-body pre {
+        font-size: 10px;
+    }
+}
+
+/* Search highlight */
+.search-highlight {
+    background: #ffff00;
+    padding: 0 2px;
+}

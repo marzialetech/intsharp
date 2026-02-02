@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installation - intsharp</title>
+    <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1>intsharp</h1>
+                <span class="version">v1.0</span>
+            </div>
+            <div class="search-box">
+                <input type="text" id="search" placeholder="Search..." autocomplete="off">
+            </div>
+            <ul class="nav-list" id="nav-list">
+                <li><a href="index.html" data-page="home">Home</a></li>
+                <li><a href="install.html" class="active" data-page="install">Installation</a></li>
+                <li><a href="guide.html" data-page="guide">Running Simulations</a></li>
+                <li><a href="components.html" data-page="components">Components</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="https://github.com/marzialetech/intsharp" target="_blank">GitHub</a>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="content">
+            <div class="window">
+                <div class="window-header">
+                    <span class="window-title">Installation</span>
+                </div>
+                <div class="window-body">
+                    <h2>Requirements</h2>
+                    <ul>
+                        <li>Python 3.9+</li>
+                        <li>pip (Python package manager)</li>
+                    </ul>
+
+                    <h3>Dependencies</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Package</th>
+                                <th>Version</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>numpy</code></td>
+                                <td>&ge;1.20</td>
+                                <td>Numerical arrays</td>
+                            </tr>
+                            <tr>
+                                <td><code>matplotlib</code></td>
+                                <td>&ge;3.3</td>
+                                <td>Plotting (image monitors)</td>
+                            </tr>
+                            <tr>
+                                <td><code>scipy</code></td>
+                                <td>&ge;1.7</td>
+                                <td>Scientific computing</td>
+                            </tr>
+                            <tr>
+                                <td><code>pydantic</code></td>
+                                <td>&ge;2.0</td>
+                                <td>Config validation</td>
+                            </tr>
+                            <tr>
+                                <td><code>pyyaml</code></td>
+                                <td>&ge;6.0</td>
+                                <td>YAML parsing</td>
+                            </tr>
+                            <tr>
+                                <td><code>tqdm</code></td>
+                                <td>&ge;4.0</td>
+                                <td>Progress bar</td>
+                            </tr>
+                            <tr>
+                                <td><code>h5py</code></td>
+                                <td>&ge;3.0</td>
+                                <td>HDF5 output</td>
+                            </tr>
+                            <tr>
+                                <td><code>imageio</code></td>
+                                <td>&ge;2.0</td>
+                                <td>GIF output</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h2>Installation Steps</h2>
+
+                    <h3>1. Clone the Repository</h3>
+                    <pre><code>git clone https://github.com/marzialetech/intsharp.git
+cd intsharp</code></pre>
+
+                    <h3>2. Create a Virtual Environment (Recommended)</h3>
+                    <pre><code>python -m venv .venv
+source .venv/bin/activate   # Linux/macOS
+# or
+.venv\Scripts\activate      # Windows</code></pre>
+
+                    <h3>3. Install Dependencies</h3>
+                    <pre><code>pip install -r requirements.txt</code></pre>
+                    <p>Or using the Makefile:</p>
+                    <pre><code>make install</code></pre>
+
+                    <h3>4. Verify Installation</h3>
+                    <pre><code>python -c "import intsharp; print('intsharp ready')"</code></pre>
+
+                    <h2>Running Your First Simulation</h2>
+                    <pre><code>python run.py unit_tests/tanh_one_rev_no_sharpening.yaml</code></pre>
+                    <p>This runs a tanh-hat advection test and produces an animated GIF in a timestamped folder.</p>
+
+                    <h2>Makefile Targets</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Target</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>make install</code></td>
+                                <td>Install dependencies from requirements.txt</td>
+                            </tr>
+                            <tr>
+                                <td><code>make run CONFIG=path/to/config.yaml</code></td>
+                                <td>Run a simulation with specified config</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="search.js"></script>
+</body>
+</html>

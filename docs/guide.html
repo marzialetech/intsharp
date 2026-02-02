@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Running Simulations - intsharp</title>
+    <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1>intsharp</h1>
+                <span class="version">v1.0</span>
+            </div>
+            <div class="search-box">
+                <input type="text" id="search" placeholder="Search..." autocomplete="off">
+            </div>
+            <ul class="nav-list" id="nav-list">
+                <li><a href="index.html" data-page="home">Home</a></li>
+                <li><a href="install.html" data-page="install">Installation</a></li>
+                <li><a href="guide.html" class="active" data-page="guide">Running Simulations</a></li>
+                <li><a href="components.html" data-page="components">Components</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="https://github.com/marzialetech/intsharp" target="_blank">GitHub</a>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="content">
+            <div class="window">
+                <div class="window-header">
+                    <span class="window-title">Running Simulations</span>
+                </div>
+                <div class="window-body">
+                    <h2>Basic Usage</h2>
+                    <pre><code>python run.py path/to/config.yaml</code></pre>
+                    <p>When you run a simulation:</p>
+                    <ol>
+                        <li>A timestamped folder is created in the same directory as the YAML file</li>
+                        <li>The YAML config is <strong>moved</strong> into this run folder</li>
+                        <li>All outputs (GIFs, images, data) are saved to the run folder</li>
+                    </ol>
+                    <p>Example folder structure after a run:</p>
+                    <pre><code>unit_tests/
+└── tanh_one_rev_no_sharpening_2026-02-01_19:24:31/
+    ├── tanh_one_rev_no_sharpening.yaml   # moved config
+    └── alpha.gif                          # output</code></pre>
+
+                    <h2>YAML Configuration Reference</h2>
+
+                    <h3>Domain</h3>
+                    <pre><code>domain:
+  x_min: -0.5      # Left boundary
+  x_max: 0.5       # Right boundary
+  n_points: 100    # Number of grid points</code></pre>
+
+                    <h3>Time</h3>
+                    <pre><code>time:
+  dt: 0.01         # Time step size
+  n_steps: 200     # Number of steps</code></pre>
+
+                    <h3>Velocity</h3>
+                    <pre><code>velocity: [0.5]    # 1D advection velocity (list with 1 element)</code></pre>
+
+                    <h3>Fields</h3>
+                    <pre><code>fields:
+  - name: alpha
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary:
+      type: periodic   # or neumann, dirichlet</code></pre>
+                    <p>Initial conditions are Python expressions evaluated with <code>x</code> (grid), <code>np</code> (numpy), and math functions (<code>sin</code>, <code>cos</code>, <code>tanh</code>, <code>exp</code>, <code>sqrt</code>, <code>pi</code>).</p>
+
+                    <h4>Boundary Condition Types</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Parameters</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>periodic</code></td>
+                                <td>(none)</td>
+                            </tr>
+                            <tr>
+                                <td><code>neumann</code></td>
+                                <td><code>gradient_left</code>, <code>gradient_right</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>dirichlet</code></td>
+                                <td><code>value_left</code>, <code>value_right</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Solver</h3>
+                    <pre><code>solver:
+  type: upwind    # First-order upwind advection</code></pre>
+
+                    <h3>Timestepper</h3>
+                    <pre><code>timestepper:
+  type: euler     # or rk4</code></pre>
+
+                    <h3>Sharpening (Optional)</h3>
+                    <pre><code>sharpening:
+  enabled: true
+  method: cl       # cl (Chiu-Lin) or pm (Parameswaran-Mandal)
+  eps_target: 0.01 # Target interface thickness
+  strength: 1.0    # Sharpening strength (Gamma)</code></pre>
+
+                    <h3>Output Monitors</h3>
+                    <pre><code>output:
+  directory: ./results   # (overridden by run folder)
+  monitors:
+    - type: console      # Progress bar (no file output)
+    - type: gif
+      every_n_steps: 20
+      field: alpha
+    - type: png
+      every_n_steps: 50
+      field: alpha
+    - type: txt
+      every_n_steps: 10
+      field: alpha
+    - type: curve
+      every_n_steps: 10
+      field: alpha
+    - type: hdf5
+      every_n_steps: 10
+      fields: [alpha]</code></pre>
+
+                    <h4>Monitor Types</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Output</th>
+                                <th>Parameters</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>console</code></td>
+                                <td>Progress bar (tqdm)</td>
+                                <td><code>every_n_steps</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>png</code></td>
+                                <td>PNG images</td>
+                                <td><code>field</code>, <code>every_n_steps</code> or <code>at_times</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>pdf</code></td>
+                                <td>PDF images</td>
+                                <td><code>field</code>, <code>every_n_steps</code> or <code>at_times</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>gif</code></td>
+                                <td>Animated GIF</td>
+                                <td><code>field</code>, <code>every_n_steps</code> or <code>at_times</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>hdf5</code></td>
+                                <td>HDF5 file</td>
+                                <td><code>fields</code> (list), <code>every_n_steps</code> or <code>at_times</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>txt</code></td>
+                                <td>Columnar text</td>
+                                <td><code>field</code>, <code>every_n_steps</code> or <code>at_times</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>curve</code></td>
+                                <td>Curve format (x, y)</td>
+                                <td><code>field</code>, <code>every_n_steps</code> or <code>at_times</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h2>Unit Test Examples</h2>
+                    <p>These validation cases are included in <code>unit_tests/</code>.</p>
+
+                    <h3>Example 1: Advection Without Sharpening</h3>
+                    <p>Tanh-hat profile, 100 pt mesh, one revolution, periodic BC, no sharpening.</p>
+                    <div class="file-path">unit_tests/tanh_one_rev_no_sharpening.yaml</div>
+                    <pre><code># Validation: tanh-hat, 100 pt mesh, one revolution, periodic BC, NO sharpening
+# One revolution: domain L=1, velocity=0.5 => T = L/|u| = 2.0 s
+
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points: 100
+
+time:
+  dt: 0.01
+  n_steps: 200   # T = 200 * 0.01 = 2.0 s (one revolution)
+
+velocity: [0.5]
+
+fields:
+  - name: alpha
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary:
+      type: periodic
+
+solver:
+  type: upwind
+
+timestepper:
+  type: euler
+
+output:
+  monitors:
+    - type: console
+      every_n_steps: 50
+    - type: gif
+      every_n_steps: 20   # 200/20 = 10 frames
+      field: alpha</code></pre>
+
+                    <h3>Example 2: Advection With CL Sharpening</h3>
+                    <p>Same setup with Chiu-Lin interface sharpening enabled.</p>
+                    <div class="file-path">unit_tests/tanh_one_rev_cl_sharpening.yaml</div>
+                    <pre><code># Validation: tanh-hat, 100 pt mesh, one revolution, periodic BC, CL sharpening
+# One revolution: domain L=1, velocity=0.5 => T = L/|u| = 2.0 s
+
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points: 100
+
+time:
+  dt: 0.01
+  n_steps: 200
+
+velocity: [0.5]
+
+fields:
+  - name: alpha
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary:
+      type: periodic
+
+solver:
+  type: upwind
+
+timestepper:
+  type: euler
+
+sharpening:
+  enabled: true
+  method: cl
+  eps_target: 0.01
+  strength: 1.0
+
+output:
+  monitors:
+    - type: console
+      every_n_steps: 50
+    - type: gif
+      every_n_steps: 20
+      field: alpha</code></pre>
+
+                    <h3>Running the Examples</h3>
+                    <pre><code># From the repo root:
+python run.py unit_tests/tanh_one_rev_no_sharpening.yaml
+python run.py unit_tests/tanh_one_rev_cl_sharpening.yaml</code></pre>
+
+                    <h2>Tips</h2>
+                    <ul>
+                        <li><strong>CFL warning:</strong> If CFL &gt; 1, a warning is printed. Reduce <code>dt</code> or increase <code>n_points</code>.</li>
+                        <li><strong>10-frame GIF:</strong> For 200 steps, use <code>every_n_steps: 20</code> to get 10 frames.</li>
+                        <li><strong>Combining monitors:</strong> You can use multiple monitors (e.g., console + gif + hdf5) in one run.</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="search.js"></script>
+</body>
+</html>

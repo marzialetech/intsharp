@@ -1,0 +1,72 @@
+// intsharp docs - Client-side search
+
+const searchIndex = [
+    { title: 'Home', url: 'index.html', keywords: 'home overview introduction features quick start' },
+    { title: 'Installation', url: 'install.html', keywords: 'install setup pip requirements dependencies python' },
+    { title: 'Running Simulations', url: 'guide.html', keywords: 'run simulation yaml config example tutorial guide' },
+    { title: 'Components', url: 'components.html', keywords: 'components solver upwind timestepper euler rk4 sharpening pm cl boundary periodic neumann dirichlet monitor console png gif hdf5 txt curve' },
+];
+
+const contentIndex = {
+    'index.html': 'intsharp modular yaml simulation framework 1d interface advection sharpening pydantic validation upwind euler rk4 pm cl periodic neumann dirichlet console png pdf gif hdf5 txt curve registry',
+    'install.html': 'install installation clone git pip requirements numpy matplotlib scipy pydantic pyyaml tqdm h5py imageio python virtual environment venv',
+    'guide.html': 'running simulation yaml config configuration domain time velocity fields initial condition boundary solver timestepper sharpening output monitors tanh hat advection revolution unit test validation example',
+    'components.html': 'upwind advection solver euler rk4 runge kutta timestepper pm parameswaran mandal cl chiu lin corrective flux sharpening periodic neumann dirichlet boundary condition console progress png pdf image gif animation hdf5 data txt text curve output monitor gradient divergence cfl courant'
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search');
+    const navLinks = document.querySelectorAll('.nav-list a');
+    
+    if (!searchInput) return;
+    
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        
+        if (query === '') {
+            // Show all links
+            navLinks.forEach(link => {
+                link.classList.remove('search-hidden');
+            });
+            return;
+        }
+        
+        // Filter navigation links
+        navLinks.forEach(link => {
+            const page = link.getAttribute('data-page');
+            const title = link.textContent.toLowerCase();
+            const url = link.getAttribute('href');
+            
+            // Check title match
+            let matches = title.includes(query);
+            
+            // Check index match
+            if (!matches) {
+                const indexItem = searchIndex.find(item => item.url === url);
+                if (indexItem && indexItem.keywords.includes(query)) {
+                    matches = true;
+                }
+            }
+            
+            // Check content index match
+            if (!matches && contentIndex[url]) {
+                matches = contentIndex[url].includes(query);
+            }
+            
+            if (matches) {
+                link.classList.remove('search-hidden');
+            } else {
+                link.classList.add('search-hidden');
+            }
+        });
+    });
+    
+    // Keyboard shortcut: Ctrl/Cmd + K to focus search
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+    });
+});
