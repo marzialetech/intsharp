@@ -135,14 +135,32 @@ class BoundaryConfig(BaseModel):
 class FieldConfig(BaseModel):
     """Configuration for a single field (e.g., volume fraction)."""
     name: str = Field(..., description="Field name (e.g., 'alpha')")
-    initial_condition: str = Field(
-        ..., description="Expression for initial condition (uses 'x' for 1D, 'x', 'y', 'r' for 2D)"
+    initial_condition: Optional[str] = Field(
+        None, description="Expression for initial condition (uses 'x' for 1D, 'x', 'y', 'r' for 2D)"
+    )
+    initial_condition_image: Optional[str] = Field(
+        None, description="Path to image file for initial condition (dark=1, light=0)"
     )
     boundary: BoundaryConfig = Field(..., description="Boundary condition")
     sharpening: Optional[bool] = Field(
         None,
         description="Enable sharpening for this field (overrides global setting if specified)"
     )
+
+    @model_validator(mode="after")
+    def validate_ic_source(self) -> "FieldConfig":
+        """Ensure exactly one of initial_condition or initial_condition_image is set."""
+        has_expr = self.initial_condition is not None
+        has_image = self.initial_condition_image is not None
+        if has_expr and has_image:
+            raise ValueError(
+                "Field cannot have both 'initial_condition' and 'initial_condition_image'"
+            )
+        if not has_expr and not has_image:
+            raise ValueError(
+                "Field requires either 'initial_condition' or 'initial_condition_image'"
+            )
+        return self
 
 
 class SolverConfig(BaseModel):
@@ -209,6 +227,30 @@ class MonitorConfig(BaseModel):
     contour_levels: list[float] = Field(
         default_factory=lambda: [0.5],
         description="Contour levels for 2D contour style (default [0.5])"
+    )
+    # Optional pcolormesh colormap (gif/mp4 2D): e.g. "viridis", "inferno", "plasma"
+    colormap: Optional[str] = Field(
+        None, description="Colormap for 2D pcolormesh (default viridis)"
+    )
+    # Optional contour overlay on pcolormesh: draw contour_levels in this color on top
+    contour_overlay_color: Optional[str] = Field(
+        None, description="If set, draw contour_levels on top of pcolormesh in this color"
+    )
+    # Contour-only mode (style=contour): contour line color (default blue)
+    contour_color: Optional[str] = Field(
+        None, description="Contour line color when style=contour (default blue)"
+    )
+    # Contour-only mode: axes background color (e.g. hex #2563eb)
+    background_color: Optional[str] = Field(
+        None, description="Axes background color when style=contour (e.g. hex #2563eb)"
+    )
+    # Image outputs (png, pdf, svg, gif, mp4): show colorbar for pcolormesh (default True)
+    show_colorbar: Optional[bool] = Field(
+        None, description="Show colorbar for pcolormesh (default True)"
+    )
+    # Image outputs: show annotations (ticks, tick labels, axis titles, plot title) (default True)
+    show_annotations: Optional[bool] = Field(
+        None, description="Show plot annotations: x/y ticks, tick labels, axis titles, plot title (default True)"
     )
 
     @model_validator(mode="after")

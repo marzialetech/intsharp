@@ -1,14 +1,16 @@
 """
-Field containers with expression-based initial condition evaluation.
+Field containers with expression-based and image-based initial condition evaluation.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field as dataclass_field
+from pathlib import Path
 from typing import Any, Union
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.ndimage import distance_transform_edt
 
 from .boundary import BoundaryCondition, create_bc
 from .config import FieldConfig
@@ -159,6 +161,99 @@ def evaluate_expression_2d(
 
 
 # ---------------------------------------------------------------------------
+# Image-based initial condition
+# ---------------------------------------------------------------------------
+
+def load_image_ic(
+    image_path: str | Path,
+    domain: Domain,
+    config_dir: Path | None = None,
+) -> NDArray[np.float64]:
+    """
+    Load an image and convert it to a volume fraction field.
+
+    The image is converted to grayscale, resized to match the domain grid,
+    thresholded (dark pixels < 0.5 become 1, light pixels become 0),
+    and a tanh-smoothed interface is applied.
+
+    Parameters
+    ----------
+    image_path : str or Path
+        Path to the image file (PNG, JPG, etc.).
+    domain : Domain1D or Domain2D
+        The computational domain.
+    config_dir : Path or None
+        Directory of the config file for resolving relative paths.
+
+    Returns
+    -------
+    NDArray[np.float64]
+        Volume fraction field values. Shape is (n_points,) for 1D, (ny, nx) for 2D.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        raise ImportError(
+            "Pillow is required for image-based initial conditions. "
+            "Install with: pip install pillow"
+        )
+
+    # Resolve path relative to config file directory
+    image_path = Path(image_path)
+    if not image_path.is_absolute() and config_dir is not None:
+        image_path = config_dir / image_path
+
+    if not image_path.exists():
+        raise FileNotFoundError(f"Image file not found: {image_path}")
+
+    # Load and convert to grayscale
+    img = Image.open(image_path).convert("L")
+
+    # Determine target size
+    if isinstance(domain, Domain2D):
+        target_size = (domain.nx, domain.ny)  # PIL uses (width, height)
+        dx = domain.dx
+    else:
+        target_size = (domain.nx, 1)
+        dx = domain.dx
+
+    # Resize using nearest neighbor to preserve sharp edges
+    img_resized = img.resize(target_size, Image.Resampling.NEAREST)
+
+    # Convert to numpy array and normalize to [0, 1]
+    # PIL: row 0 = top of image, column 0 = left. Shape (height, width) = (ny, nx).
+    img_array = np.array(img_resized, dtype=np.float64) / 255.0
+
+    if isinstance(domain, Domain2D):
+        # Align image with domain: row 0 = y_min (bottom), col 0 = x_min (left).
+        # PIL: row 0 = image top, col 0 = image left.
+        # Flip vertical so image top -> domain top (row ny-1).
+        img_array = np.flipud(img_array)
+    else:
+        # For 1D, take the first row (or average if multiple rows)
+        if img_array.ndim == 2:
+            img_array = img_array.mean(axis=0)
+
+    # Threshold: dark pixels (< 0.5) become 1 (alpha=1), light become 0
+    binary_mask = (img_array < 0.5).astype(np.float64)
+
+    # Compute signed distance field
+    # Positive inside the mask (alpha=1 region), negative outside
+    dist_inside = distance_transform_edt(binary_mask)
+    dist_outside = distance_transform_edt(1.0 - binary_mask)
+    signed_distance = dist_inside - dist_outside
+
+    # Apply tanh profile with epsilon = 3 * dx
+    eps = 3.0 * dx
+    if eps > 0:
+        alpha = 0.5 * (1.0 + np.tanh(signed_distance / eps))
+    else:
+        alpha = binary_mask
+
+    return alpha.astype(np.float64)
+
+
+# ---------------------------------------------------------------------------
 # Field container
 # ---------------------------------------------------------------------------
 
@@ -193,7 +288,11 @@ class Field:
         )
 
 
-def create_field(config: FieldConfig, domain: Domain) -> Field:
+def create_field(
+    config: FieldConfig,
+    domain: Domain,
+    config_dir: Path | None = None,
+) -> Field:
     """
     Create a field from configuration and domain.
 
@@ -203,17 +302,28 @@ def create_field(config: FieldConfig, domain: Domain) -> Field:
         Field configuration.
     domain : Domain1D or Domain2D
         The computational domain.
+    config_dir : Path or None
+        Directory of the config file for resolving relative image paths.
 
     Returns
     -------
     Field
         Initialized field.
     """
-    # Evaluate initial condition based on domain dimension
-    if isinstance(domain, Domain2D):
-        values = evaluate_expression_2d(config.initial_condition, domain.X, domain.Y)
+    # Evaluate initial condition based on source type
+    if config.initial_condition_image is not None:
+        # Image-based initial condition
+        values = load_image_ic(config.initial_condition_image, domain, config_dir)
+    elif config.initial_condition is not None:
+        # Expression-based initial condition
+        if isinstance(domain, Domain2D):
+            values = evaluate_expression_2d(config.initial_condition, domain.X, domain.Y)
+        else:
+            values = evaluate_expression_1d(config.initial_condition, domain.x)
     else:
-        values = evaluate_expression_1d(config.initial_condition, domain.x)
+        raise ValueError(
+            f"Field '{config.name}' has no initial condition specified"
+        )
 
     # Create boundary condition
     bc = create_bc(config.boundary)
@@ -229,6 +339,7 @@ def create_field(config: FieldConfig, domain: Domain) -> Field:
 def create_fields(
     configs: list[FieldConfig],
     domain: Domain,
+    config_dir: Path | None = None,
 ) -> dict[str, Field]:
     """
     Create all fields from configuration.
@@ -239,6 +350,8 @@ def create_fields(
         List of field configurations.
     domain : Domain1D or Domain2D
         The computational domain.
+    config_dir : Path or None
+        Directory of the config file for resolving relative image paths.
 
     Returns
     -------
@@ -247,5 +360,5 @@ def create_fields(
     """
     fields = {}
     for cfg in configs:
-        fields[cfg.name] = create_field(cfg, domain)
+        fields[cfg.name] = create_field(cfg, domain, config_dir)
     return fields

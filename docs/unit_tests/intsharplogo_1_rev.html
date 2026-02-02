@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>intsharplogo_1_rev - intsharp</title>
+    <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <div class="app">
+        <nav class="sidebar">
+            <div class="sidebar-header"><h1>intsharp</h1><span class="version">v1.0</span></div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search..." autocomplete="off"></div>
+            <ul class="nav-list" id="nav-list">
+                <li><a href="../index.html" data-page="home">Home</a></li>
+                <li><a href="../install.html" data-page="install">Installation</a></li>
+                <li><a href="../guide.html" data-page="guide">Running Simulations</a></li>
+                <li><a href="../components.html" data-page="components">Components</a></li>
+                <li><a href="../unit-tests.html" class="active" data-page="unit-tests">Unit Tests</a></li>
+            </ul>
+            <div class="sidebar-footer"><a href="https://github.com/marzialetech/intsharp" target="_blank">GitHub</a></div>
+        </nav>
+        <main class="content">
+            <div class="window">
+                <div class="window-header"><span class="window-title">intsharplogo_1_rev</span></div>
+                <div class="window-body">
+                    <p><a href="../unit-tests.html">&larr; Unit Tests</a></p>
+                    <h2>Description</h2>
+                    <p>2D advection using the <strong>intsharp logo</strong> (PDF converted to PNG) as the initial condition. One revolution in x, 50 frames. Output: white 0.5 contour on blue background (<code>#2563eb</code>), no pcolormesh, tight crop. PM sharpening enabled. CFL = 0.5.</p>
+                    <p>Output folder: <a href="intsharplogo_1_rev/">logo, YAML, and GIF</a></p>
+
+                    <h3>How to run</h3>
+                    <pre><code>python run.py unit_tests/intsharplogo_1_rev.yaml</code></pre>
+                    <p>The YAML lives in <code>unit_tests/</code>; each run copies it and the initial-condition image into the timestamped run folder (original remains for easy re-running).</p>
+
+                    <h3>Config summary</h3>
+                    <ul>
+                        <li><strong>Domain:</strong> 2D, aspect ratio matches image (2043×314), no resizing</li>
+                        <li><strong>Time:</strong> dt = 0.00049, 4084 steps (T = 2 s, one revolution)</li>
+                        <li><strong>CFL:</strong> 0.5</li>
+                        <li><strong>Velocity:</strong> (0.5, 0.0)</li>
+                        <li><strong>Field:</strong> alpha, <code>initial_condition_image: "intsharplogo.png"</code>, periodic BC</li>
+                        <li><strong>Solver:</strong> upwind; <strong>Sharpening:</strong> PM, eps_target 0.002</li>
+                        <li><strong>Monitor:</strong> gif, style=contour, contour_levels [0.5], contour_color white, background_color #2563eb, show_colorbar/show_annotations false</li>
+                    </ul>
+
+                    <h3>Output</h3>
+                    <p>Animated GIF (50 frames). White 0.5 contour on blue background. Use the slider to scrub through frames.</p>
+                    <p><img src="intsharplogo_1_rev/alpha.gif" alt="alpha.gif" class="unit-test-output doc-animated-gif" style="max-width:100%; height:auto;" data-frames="50" data-fps="10" data-pause="3"></p>
+
+                    <h3>Config (YAML)</h3>
+                    <pre><code># 2D advection test using intsharp logo PDF (converted to PNG) as initial condition
+# Domain aspect ratio matches image (2043 x 314) so no resizing. 1 revolution in x, 50 frames.
+# Output: contour only, white 0.5 contour on blue background (#2563eb).
+
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points_x: 2043   # match image width
+  y_min: -0.0769     # 0.5 * 314/2043 so aspect ratio matches 2043x314
+  y_max: 0.0769
+  n_points_y: 314    # match image height
+
+time:
+  dt: 0.00049        # CFL = 0.5: dt = 0.5*dx/u, dx = 1/2042
+  n_steps: 4084     # 1 revolution: T = 2s
+
+velocity: [0.5, 0.0]
+
+fields:
+  - name: alpha
+    initial_condition_image: "intsharplogo.png"
+    boundary:
+      type: periodic
+
+solver:
+  type: upwind
+
+sharpening:
+  enabled: true
+  method: pm
+  eps_target: 0.002
+  strength: 1.0
+
+output:
+  monitors:
+    - type: console
+    - type: gif
+      every_n_steps: 83   # 50 frames (steps 0, 83, 166, ..., 4067)
+      field: alpha
+      style: contour
+      contour_levels: [0.5]
+      contour_color: "white"
+      background_color: "#2563eb"
+      show_colorbar: false
+      show_annotations: false</code></pre>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../search.js"></script>
+    <script src="../gif-loop.js"></script>
+</body>
+</html>

@@ -15,6 +15,7 @@ Modes:
 
 from __future__ import annotations
 
+import io
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -58,6 +59,12 @@ class GIFMonitor(Monitor):
         compare_fields: list[dict] | None = None,
         style: str = "pcolormesh",
         contour_levels: list[float] | None = None,
+        colormap: str | None = None,
+        contour_overlay_color: str | None = None,
+        contour_color: str | None = None,
+        background_color: str | None = None,
+        show_colorbar: bool | None = None,
+        show_annotations: bool | None = None,
         output_format: str = "gif",
         fps: int = 10,
         **kwargs,
@@ -67,6 +74,12 @@ class GIFMonitor(Monitor):
         self.compare_fields = compare_fields or []
         self.style = style
         self.contour_levels = contour_levels if contour_levels else [0.5]
+        self.colormap = colormap or "viridis"
+        self.contour_overlay_color = contour_overlay_color
+        self.contour_color = contour_color or "blue"
+        self.background_color = background_color
+        self.show_colorbar = show_colorbar if show_colorbar is not None else True
+        self.show_annotations = show_annotations if show_annotations is not None else True
         self.output_format = output_format.lower()
         self.fps = fps
 
@@ -87,6 +100,27 @@ class GIFMonitor(Monitor):
         self._x_max: float = 1.0
         self._y_min: float = 0.0
         self._y_max: float = 1.0
+
+    def _append_frame(
+        self,
+        images: list,
+        fig: "plt.Figure",
+        imageio_module,
+    ) -> None:
+        """Append current figure as RGB array; use tight crop when colorbar and annotations hidden."""
+        if not self.show_colorbar and not self.show_annotations:
+            buf = io.BytesIO()
+            fig.savefig(buf, format="png", bbox_inches="tight", pad_inches=0, dpi=150)
+            buf.seek(0)
+            img = imageio_module.imread(buf)
+            if img.ndim == 3 and img.shape[2] == 4:
+                img = img[:, :, :3]
+            images.append(img)
+        else:
+            fig.canvas.draw()
+            img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+            img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+            images.append(img)
 
     def on_start(
         self,
@@ -166,21 +200,28 @@ class GIFMonitor(Monitor):
             if self._ndim == 1:
                 fig, ax = plt.subplots(figsize=(8, 4))
                 ax.plot(self._domain_x, values, "b-", linewidth=1.5)
-                ax.set_xlabel("x")
-                ax.set_ylabel(self.field_name)
-                ax.set_title(f"{self.field_name} at t = {t:.4f}")
+                if self.show_annotations:
+                    ax.set_xlabel("x")
+                    ax.set_ylabel(self.field_name)
+                    ax.set_title(f"{self.field_name} at t = {t:.4f}")
+                else:
+                    ax.set_xticks([])
+                    ax.set_yticks([])
                 ax.set_xlim(self._x_min, self._x_max)
                 ax.set_ylim(-0.1, 1.1)
                 ax.grid(True, alpha=0.3)
             else:
                 fig, ax = plt.subplots(figsize=(6, 6))
                 if self.style == "contour":
+                    if self.background_color:
+                        ax.set_facecolor(self.background_color)
+                        fig.patch.set_facecolor(self.background_color)
                     ax.contour(
                         self._domain_X,
                         self._domain_Y,
                         values,
                         levels=self.contour_levels,
-                        colors=["blue"],
+                        colors=[self.contour_color],
                         linewidths=2,
                     )
                 else:
@@ -188,24 +229,35 @@ class GIFMonitor(Monitor):
                         self._domain_X,
                         self._domain_Y,
                         values,
-                        cmap="viridis",
+                        cmap=self.colormap,
                         vmin=0.0,
                         vmax=1.0,
                         shading="auto",
                     )
-                    fig.colorbar(pcm, ax=ax, label=self.field_name)
-                ax.set_xlabel("x")
-                ax.set_ylabel("y")
-                ax.set_title(f"{self.field_name} at t = {t:.4f}")
+                    if self.show_colorbar:
+                        fig.colorbar(pcm, ax=ax, label=self.field_name)
+                    if self.contour_overlay_color:
+                        ax.contour(
+                            self._domain_X,
+                            self._domain_Y,
+                            values,
+                            levels=self.contour_levels,
+                            colors=[self.contour_overlay_color],
+                            linewidths=2,
+                        )
+                if self.show_annotations:
+                    ax.set_xlabel("x")
+                    ax.set_ylabel("y")
+                    ax.set_title(f"{self.field_name} at t = {t:.4f}")
+                else:
+                    ax.set_xticks([])
+                    ax.set_yticks([])
                 ax.set_xlim(self._x_min, self._x_max)
                 ax.set_ylim(self._y_min, self._y_max)
                 ax.set_aspect("equal")
                 ax.grid(True, alpha=0.3)
 
-            fig.canvas.draw()
-            img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-            img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-            images.append(img)
+            self._append_frame(images, fig, imageio)
             plt.close(fig)
 
         ext = "mp4" if self.output_format == "mp4" else "gif"
@@ -247,11 +299,15 @@ class GIFMonitor(Monitor):
                     )
                 ax.set_xlim(self._x_min, self._x_max)
                 ax.set_ylim(-0.1, 1.1)
-                ax.set_xlabel("x")
-                ax.set_ylabel("value")
-                ax.set_title(f"Comparison at t = {t:.4f}")
+                if self.show_annotations:
+                    ax.set_xlabel("x")
+                    ax.set_ylabel("value")
+                    ax.set_title(f"Comparison at t = {t:.4f}")
+                    ax.legend(loc="upper right", fontsize=8)
+                else:
+                    ax.set_xticks([])
+                    ax.set_yticks([])
                 ax.grid(True, alpha=0.3)
-                ax.legend(loc="upper right", fontsize=8)
             else:
                 # 2D: overlaid contours
                 fig, ax = plt.subplots(figsize=(6, 6))
@@ -274,16 +330,17 @@ class GIFMonitor(Monitor):
                     )
                 ax.set_xlim(self._x_min, self._x_max)
                 ax.set_ylim(self._y_min, self._y_max)
-                ax.set_xlabel("x")
-                ax.set_ylabel("y")
-                ax.set_title(f"Comparison at t = {t:.4f}")
+                if self.show_annotations:
+                    ax.set_xlabel("x")
+                    ax.set_ylabel("y")
+                    ax.set_title(f"Comparison at t = {t:.4f}")
+                else:
+                    ax.set_xticks([])
+                    ax.set_yticks([])
                 ax.set_aspect("equal")
                 ax.grid(True, alpha=0.3)
 
-            fig.canvas.draw()
-            img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-            img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-            images.append(img)
+            self._append_frame(images, fig, imageio)
             plt.close(fig)
 
         ext = "mp4" if self.output_format == "mp4" else "gif"

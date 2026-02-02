@@ -70,9 +70,25 @@ remains in place for easy re-running.
         shutil.copy2(str(config_path), str(dest_yaml))
         print(f"Run folder: {run_dir} (copied config to {dest_yaml.name})")
 
+        # Copy any initial-condition images into the run folder (for archival)
+        config_dir = config_path.parent
+        seen_images: set[Path] = set()
+        for field_cfg in config.fields:
+            img_path = getattr(field_cfg, "initial_condition_image", None)
+            if not img_path:
+                continue
+            src = (config_dir / img_path).resolve()
+            if not src.exists():
+                continue
+            if src not in seen_images:
+                seen_images.add(src)
+                dest = run_dir / Path(img_path).name
+                shutil.copy2(str(src), str(dest))
+                print(f"Copied initial-condition image to {dest.name}")
+
         # Point config output to this folder and run
         config.output.directory = str(run_dir)
-        fields = run_simulation(config)
+        fields = run_simulation(config, config_dir=config_path.parent)
 
         print(f"Simulation complete. Outputs in {run_dir}. Final fields: {list(fields.keys())}")
         return 0

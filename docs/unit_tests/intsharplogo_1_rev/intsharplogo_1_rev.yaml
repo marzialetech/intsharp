@@ -1,0 +1,45 @@
+# 2D advection test using intsharp logo PDF (converted to PNG) as initial condition
+# Domain aspect ratio matches image (2043 x 314) so no resizing. 1 revolution in x, 50 frames.
+# Output: contour only, white 0.5 contour on blue background (#2563eb).
+
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points_x: 2043   # match image width
+  y_min: -0.0769     # 0.5 * 314/2043 so aspect ratio matches 2043x314
+  y_max: 0.0769
+  n_points_y: 314    # match image height
+
+time:
+  dt: 0.00049        # CFL = 0.5: dt = 0.5*dx/u, dx = 1/2042
+  n_steps: 4084     # 1 revolution: T = 2s
+
+velocity: [0.5, 0.0]
+
+fields:
+  - name: alpha
+    initial_condition_image: "intsharplogo.png"
+    boundary:
+      type: periodic
+
+solver:
+  type: upwind
+
+sharpening:
+  enabled: true
+  method: pm
+  eps_target: 0.002
+  strength: 1.0
+
+output:
+  monitors:
+    - type: console
+    - type: gif
+      every_n_steps: 83   # 50 frames (steps 0, 83, 166, ..., 4067)
+      field: alpha
+      style: contour
+      contour_levels: [0.5]
+      contour_color: "white"
+      background_color: "#2563eb"
+      show_colorbar: false
+      show_annotations: false

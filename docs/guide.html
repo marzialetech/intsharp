@@ -88,12 +88,30 @@ velocity: [0.5, 0.0]   # 2D: (u, v) advection velocity</code></pre>
       type: periodic   # or neumann, dirichlet
     sharpening: true   # optional per-field override</code></pre>
                     <p><strong>Per-field sharpening:</strong> Each field can override the global sharpening setting by adding <code>sharpening: true</code> or <code>sharpening: false</code>. This allows comparing sharpened vs non-sharpened fields in the same simulation.</p>
-                    <p>Initial conditions are Python expressions evaluated with:</p>
+
+                    <h4>Expression-based Initial Conditions</h4>
+                    <p>Initial conditions can be Python expressions evaluated with:</p>
                     <ul>
                         <li><strong>1D:</strong> <code>x</code> (grid coordinates)</li>
                         <li><strong>2D:</strong> <code>x</code>, <code>y</code> (meshgrid), <code>r = sqrt(x² + y²)</code> (radial distance)</li>
                         <li>Math functions: <code>sin</code>, <code>cos</code>, <code>tanh</code>, <code>exp</code>, <code>sqrt</code>, <code>pi</code>, <code>np</code> (numpy)</li>
                     </ul>
+
+                    <h4>Image-based Initial Conditions</h4>
+                    <p>Instead of an expression, you can specify an image file:</p>
+                    <pre><code>fields:
+  - name: alpha
+    initial_condition_image: "shapes/circle.png"
+    boundary:
+      type: periodic</code></pre>
+                    <p>The image is processed as follows:</p>
+                    <ol>
+                        <li>Converted to grayscale</li>
+                        <li>Resized to match the domain grid using nearest-neighbor interpolation</li>
+                        <li>Thresholded: <strong>dark pixels (&lt; 0.5)</strong> become α = 1, light pixels become α = 0</li>
+                        <li>A tanh-smoothed interface is applied with ε = 3·dx</li>
+                    </ol>
+                    <p>Image paths are resolved relative to the YAML config file location.</p>
 
                     <h4>Boundary Condition Types</h4>
                     <table>
@@ -142,36 +160,27 @@ velocity: [0.5, 0.0]   # 2D: (u, v) advection velocity</code></pre>
     - type: gif
       every_n_steps: 20
       field: alpha
-    - type: png
-      every_n_steps: 50
-      field: alpha
-    - type: txt
-      every_n_steps: 10
-      field: alpha
-    - type: curve
-      every_n_steps: 10
-      field: alpha
-    - type: hdf5
-      every_n_steps: 10
-      fields: [alpha]
-    # 2D-only monitors:
-    - type: contour_gif
-      every_n_steps: 20
-      field: alpha
-      contour_level: 0.5      # default 0.5
-      show_centroid: true     # optional
-      show_crosshairs: true   # optional
-    - type: contour_compare_gif
+    - type: gif          # Multi-field comparison
       every_n_steps: 20
       compare_fields:
         - field: alpha_no_sharp
-          contour_levels: [0.5]
           color: blue
           linestyle: "-"
         - field: alpha_pm
-          contour_levels: [0.25, 0.5, 0.75]
           color: red
-          linestyle: "--"</code></pre>
+          linestyle: "--"
+    - type: mp4
+      every_n_steps: 20
+      field: alpha
+    - type: png
+      every_n_steps: 50
+      field: alpha
+    - type: svg
+      every_n_steps: 50
+      field: alpha
+    - type: hdf5
+      every_n_steps: 10
+      fields: [alpha]</code></pre>
 
                     <h4>Monitor Types</h4>
                     <table>
@@ -186,7 +195,17 @@ velocity: [0.5, 0.0]   # 2D: (u, v) advection velocity</code></pre>
                             <tr>
                                 <td><code>console</code></td>
                                 <td>Progress bar (tqdm)</td>
-                                <td><code>every_n_steps</code></td>
+                                <td>(none)</td>
+                            </tr>
+                            <tr>
+                                <td><code>gif</code></td>
+                                <td>Animated GIF</td>
+                                <td><code>field</code> or <code>compare_fields</code>, <code>style</code>, <code>contour_levels</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>mp4</code></td>
+                                <td>MP4 video</td>
+                                <td>Same as <code>gif</code> (requires ffmpeg)</td>
                             </tr>
                             <tr>
                                 <td><code>png</code></td>
@@ -199,8 +218,8 @@ velocity: [0.5, 0.0]   # 2D: (u, v) advection velocity</code></pre>
                                 <td><code>field</code>, <code>every_n_steps</code> or <code>at_times</code></td>
                             </tr>
                             <tr>
-                                <td><code>gif</code></td>
-                                <td>Animated GIF</td>
+                                <td><code>svg</code></td>
+                                <td>SVG images</td>
                                 <td><code>field</code>, <code>every_n_steps</code> or <code>at_times</code></td>
                             </tr>
                             <tr>
@@ -218,23 +237,9 @@ velocity: [0.5, 0.0]   # 2D: (u, v) advection velocity</code></pre>
                                 <td>Curve format (x, y)</td>
                                 <td><code>field</code>, <code>every_n_steps</code> or <code>at_times</code></td>
                             </tr>
-                            <tr>
-                                <td><code>contour_gif</code></td>
-                                <td>Animated contour GIF (2D)</td>
-                                <td><code>field</code>, <code>contour_level</code>, <code>show_centroid</code>, <code>show_crosshairs</code></td>
-                            </tr>
-                            <tr>
-                                <td><code>contour_compare_gif</code></td>
-                                <td>Compare multiple fields' contours (2D)</td>
-                                <td><code>compare_fields</code> (list of field configs with <code>contour_levels</code>, <code>color</code>, <code>linestyle</code>)</td>
-                            </tr>
-                            <tr>
-                                <td><code>compare_gif</code></td>
-                                <td>Compare multiple 1D fields on one plot</td>
-                                <td><code>compare_fields</code> (list with <code>field</code>, <code>color</code>, <code>linestyle</code>)</td>
-                            </tr>
                         </tbody>
                     </table>
+                    <p>See <a href="component/gif.html">gif</a> for details on single-field vs multi-field modes and 2D visualization options.</p>
 
                 </div>
             </div>

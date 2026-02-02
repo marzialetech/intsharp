@@ -32,10 +32,17 @@
                         <li><a href="unit_tests/tanh_circle_10_rev_compare.html">tanh_circle_10_rev_compare</a> — 2D: 10 revolutions, no sharpening vs PM (contour overlay)</li>
                     </ul>
 
+                    <h2>Logo Test</h2>
+                    <p>Image-based initial condition: intsharp logo (PDF→PNG) advected one revolution. Output folder includes logo, YAML, and GIF.</p>
+                    <ul>
+                        <li><a href="unit_tests/intsharplogo_1_rev.html">intsharplogo_1_rev</a> — 2D: logo IC, 1 revolution, 50 frames, white 0.5 contour on blue (#2563eb), PM sharpening, CFL 0.5</li>
+                    </ul>
+
                     <h3>Running the tests</h3>
                     <pre><code># From the repo root:
 python run.py unit_tests/tanh_hat_10_rev_compare.yaml
-python run.py unit_tests/tanh_circle_10_rev_compare.yaml</code></pre>
+python run.py unit_tests/tanh_circle_10_rev_compare.yaml
+python run.py unit_tests/intsharplogo_1_rev.yaml</code></pre>
                 </div>
             </div>
         </main>

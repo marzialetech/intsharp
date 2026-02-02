@@ -16,7 +16,7 @@ from ..registry import register_monitor
 from .base import Monitor
 
 if TYPE_CHECKING:
-    from ..domain import Domain1D
+    from ..domain import Domain
     from ..fields import Field
 
 
@@ -26,7 +26,7 @@ class TxtMonitor(Monitor):
     Plain-text columnar output.
 
     One .txt file per output time with header line (# step=... t=...)
-    and columns: x, then requested field(s). Delimiter is whitespace.
+    and columns: 1D: x, field(s); 2D: x, y, field(s). Delimiter is whitespace.
     """
 
     def __init__(
@@ -50,7 +50,7 @@ class TxtMonitor(Monitor):
     def on_start(
         self,
         fields: dict[str, "Field"],
-        domain: "Domain1D",
+        domain: "Domain",
     ) -> None:
         """Create output directory."""
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -60,7 +60,7 @@ class TxtMonitor(Monitor):
         step: int,
         t: float,
         fields: dict[str, "Field"],
-        domain: "Domain1D",
+        domain: "Domain",
     ) -> None:
         """Write .txt snapshot if output is due."""
         dt = 0.001
@@ -74,10 +74,21 @@ class TxtMonitor(Monitor):
             if name not in fields:
                 raise KeyError(f"Field '{name}' not found for txt output")
 
-        x = domain.x
+        ndim = domain.ndim
         header_parts = [f"# step={step}", f"t={t:.6e}"]
-        col_names = ["x"] + self.field_names
-        cols = [x] + [fields[name].values for name in self.field_names]
+
+        if ndim == 1:
+            x = domain.x
+            col_names = ["x"] + self.field_names
+            cols = [x] + [fields[name].values for name in self.field_names]
+        else:
+            x_flat = domain.X.ravel()
+            y_flat = domain.Y.ravel()
+            col_names = ["x", "y"] + self.field_names
+            cols = [x_flat, y_flat] + [
+                np.asarray(fields[name].values).ravel() for name in self.field_names
+            ]
+
         data = np.column_stack(cols)
 
         filename = f"snapshot_{self._frame_count:05d}.txt"

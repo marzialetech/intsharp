@@ -52,8 +52,11 @@ def create_monitors(
         monitor_cls = get_monitor(mon_cfg.type)
 
         # Build kwargs for monitor
+        mon_output_dir = output_dir
+        if mon_cfg.type == "txt":
+            mon_output_dir = output_dir / "txt"
         kwargs = {
-            "output_dir": output_dir,
+            "output_dir": mon_output_dir,
             "every_n_steps": mon_cfg.every_n_steps,
             "at_times": mon_cfg.at_times,
         }
@@ -63,11 +66,19 @@ def create_monitors(
             kwargs["total_steps"] = config.time.n_steps
         elif mon_cfg.type in ("png", "pdf", "svg"):
             kwargs["field"] = mon_cfg.field
+            kwargs["show_colorbar"] = mon_cfg.show_colorbar
+            kwargs["show_annotations"] = mon_cfg.show_annotations
         elif mon_cfg.type in ("gif", "mp4"):
             # Unified gif/mp4: single-field or compare mode
             kwargs["field"] = mon_cfg.field
             kwargs["style"] = mon_cfg.style
             kwargs["contour_levels"] = mon_cfg.contour_levels
+            kwargs["colormap"] = mon_cfg.colormap
+            kwargs["contour_overlay_color"] = mon_cfg.contour_overlay_color
+            kwargs["contour_color"] = mon_cfg.contour_color
+            kwargs["background_color"] = mon_cfg.background_color
+            kwargs["show_colorbar"] = mon_cfg.show_colorbar
+            kwargs["show_annotations"] = mon_cfg.show_annotations
             kwargs["output_format"] = mon_cfg.type  # "gif" or "mp4"
             if mon_cfg.compare_fields:
                 kwargs["compare_fields"] = [
@@ -90,7 +101,10 @@ def create_monitors(
     return monitor_list
 
 
-def run_simulation(config: SimulationConfig) -> dict[str, Field]:
+def run_simulation(
+    config: SimulationConfig,
+    config_dir: Path | None = None,
+) -> dict[str, Field]:
     """
     Run the simulation.
 
@@ -98,6 +112,8 @@ def run_simulation(config: SimulationConfig) -> dict[str, Field]:
     ----------
     config : SimulationConfig
         Complete simulation configuration.
+    config_dir : Path or None
+        Directory of the config file for resolving relative image paths.
 
     Returns
     -------
@@ -109,7 +125,7 @@ def run_simulation(config: SimulationConfig) -> dict[str, Field]:
     ndim = domain.ndim
 
     # Create fields
-    fields = create_fields(config.fields, domain)
+    fields = create_fields(config.fields, domain, config_dir)
 
     # Get solver based on dimension
     if ndim == 1:
