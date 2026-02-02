@@ -1,7 +1,5 @@
 # IntSharp Makefile
-.PHONY: pdf clean run install
-
-export PATH := /Library/TeX/texbin:$(PATH)
+.PHONY: clean run install
 
 # -------------------------------------------------------------------------
 # Simulation
@@ -15,14 +13,6 @@ run:
 install:
 	pip install -r requirements.txt
 
-# -------------------------------------------------------------------------
-# Manuscript
-# -------------------------------------------------------------------------
-
-# Build main manuscript PDF
-pdf:
-	cd manuscript && latexmk -pdf -bibtex -outdir=build main.tex && open build/main.pdf
-
-# Clean build artifacts (keeps figs and source)
+# Clean build artifacts
 clean:
-	rm -rf manuscript/build results
+	rm -rf results

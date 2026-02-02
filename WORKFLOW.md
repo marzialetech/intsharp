@@ -27,11 +27,6 @@ intsharp/
 │       ├── image.py     # PNG/PDF frame output
 │       ├── gif.py       # Animated GIF
 │       └── hdf5.py      # HDF5 data output
-├── sandbox/             # Experimental notebooks (moved from notebooks/)
-├── manuscript/          # LaTeX manuscript
-│   ├── main.tex
-│   ├── !format/         # Elsevier templates
-│   └── figs/CLPM/       # Manuscript figures (PDF)
 ├── results/             # Simulation outputs (generated)
 ├── Makefile
 └── requirements.txt
@@ -138,16 +133,8 @@ def my_sharpening(psi, dx, dt, eps_target, strength, bc):
     return new_psi
 ```
 
-## Manuscript Workflow
-
-1. Run simulation → outputs to `results/`
-2. Copy relevant figures to `manuscript/figs/CLPM/`
-3. Add `\includegraphics{figs/CLPM/...}` to `.tex` files
-4. Build PDF: `make pdf`
-
 ## Make Targets
 
 - `make run` - Run simulation with `config.yaml`
-- `make pdf` - Build and open manuscript PDF
 - `make install` - Install Python dependencies
 - `make clean` - Remove build artifacts
