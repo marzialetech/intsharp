@@ -27,6 +27,12 @@
             <div class="window">
                 <div class="window-header"><span class="window-title">Unit Tests</span></div>
                 <div class="window-body">
+                    <h2>Euler Tests</h2>
+                    <p>1D compressible Euler (single-phase and two-phase) with AUSM+UP flux.</p>
+                    <ul>
+                        <li><a href="unit_tests/sod_shock_tube_1d.html">sod_shock_tube_1d</a> — 1D Sod shock tube: ideal gas Riemann problem, t=0.2, rarefaction/contact/shock</li>
+                    </ul>
+
                     <h2>Comparison Tests</h2>
                     <p>Per-field sharpening with multiple fields overlaid in one GIF. Each test page has the full YAML and run command.</p>
                     <ul>
@@ -42,6 +48,7 @@
 
                     <h3>Running the tests</h3>
                     <pre><code># From the repo root:
+python run.py unit_tests/sod_shock_tube_1d.yaml
 python run.py unit_tests/tanh_hat_10_rev_compare.yaml
 python run.py unit_tests/tanh_circle_10_rev_compare.yaml
 python run.py unit_tests/intsharplogo_1_rev.yaml</code></pre>

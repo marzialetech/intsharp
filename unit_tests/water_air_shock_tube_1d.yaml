@@ -1,0 +1,88 @@
+# Water-Air Shock Tube Test (Two-Phase Compressible Euler)
+#
+# Reference: Consistent closure laws for water-air shock tube benchmarks
+# 
+# Initial conditions:
+#   Left (x ≤ 0.75):  Water
+#                     ρ = 1000 kg/m³, u = 0, p = 10⁹ Pa, α = 1
+#   Right (x > 0.75): Air
+#                     ρ = 10 kg/m³, u = 0, p = 10⁵ Pa, α = 0
+#
+# Density ratio: 100, Pressure ratio: 10^4
+# Final time: t = 2.4×10⁻⁴ s
+#
+# EOS (Stiffened Gas):
+#   Water: γ = 4.4, p_∞ = 6×10⁸ Pa
+#   Air:   γ = 1.4, p_∞ = 0
+
+domain:
+  x_min: 0.0
+  x_max: 1.0
+  n_points: 500    # Finer grid for better resolution
+
+time:
+  dt: 2.0e-8       # Smaller dt for finer grid (CFL < 1)
+  n_steps: 12000   # t_final = 2.4×10⁻⁴ s
+
+physics:
+  mode: euler
+  
+  # Phase 1: Water (stiffened gas)
+  phase1:
+    name: water
+    gamma: 4.4
+    p_infinity: 6.0e8
+  
+  # Phase 2: Air (ideal gas)
+  phase2:
+    name: air
+    gamma: 1.4
+    p_infinity: 0.0
+  
+  euler_initial_conditions:
+    type: riemann
+    x_discontinuity: 0.75
+    left:
+      rho: 1000.0      # Water density
+      u: 0.0
+      p: 1.0e9         # High pressure (10^9 Pa)
+      alpha: 1.0       # Pure water
+    right:
+      rho: 10.0        # Air density (1/100 of water)
+      u: 0.0
+      p: 1.0e5         # Atmospheric (10^5 Pa)
+      alpha: 0.0       # Pure air
+  
+  euler_bc: transmissive
+  two_phase_model: 5eq    # Use 5-equation model for sharp interfaces
+
+output:
+  directory: ./unit_tests/water_air_shock_tube_1d
+  monitors:
+    - type: console
+    
+    # Animated evolution
+    - type: gif
+      field: rho
+      every_n_steps: 250
+      style: contour
+
+    - type: gif
+      field: u
+      every_n_steps: 250
+      style: contour
+
+    - type: gif
+      field: p
+      every_n_steps: 250
+      style: contour
+
+    - type: gif
+      field: alpha
+      every_n_steps: 250
+      style: contour
+
+    # Text snapshots
+    - type: txt
+      fields: [rho, u, p, E, e_int, alpha]
+      every_n_steps: 3000

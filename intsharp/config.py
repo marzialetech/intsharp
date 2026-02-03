@@ -2,13 +2,17 @@
 Configuration parsing and validation for the simulation framework.
 
 Uses pydantic for strict schema validation with helpful error messages.
+
+Supports two physics modes:
+- advection_only: Volume fraction advection with optional sharpening (original)
+- euler: Compressible Euler equations with AUSM+UP flux
 """
 
 from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Union
 
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -185,6 +189,169 @@ class SharpeningConfig(BaseModel):
     strength: float = Field(1.0, gt=0, description="Sharpening strength (Gamma)")
 
 
+class SurfaceTensionConfig(BaseModel):
+    """Surface tension diagnostic configuration (optional)."""
+    enabled: bool = Field(False, description="Enable surface tension diagnostics")
+    sigma: float = Field(0.07, gt=0, description="Surface tension coefficient")
+    source_field: str = Field("alpha", description="Field to compute curvature from")
+    smoothing_sigma: Optional[float] = Field(
+        None, ge=0, description="Brackbill-style Gaussian smoothing sigma (grid cells). None = no smoothing."
+    )
+    interface_band_alpha_min: Optional[float] = Field(
+        None, ge=0, le=1, description="Mask diagnostics to alpha >= this (raw alpha). None = no band."
+    )
+    interface_band_alpha_max: Optional[float] = Field(
+        None, ge=0, le=1, description="Mask diagnostics to alpha <= this (raw alpha). None = no band."
+    )
+
+    @model_validator(mode="after")
+    def validate_interface_band(self) -> "SurfaceTensionConfig":
+        """Interface band requires both min and max."""
+        has_min = self.interface_band_alpha_min is not None
+        has_max = self.interface_band_alpha_max is not None
+        if has_min != has_max:
+            raise ValueError(
+                "interface_band_alpha_min and interface_band_alpha_max must both be set or both None"
+            )
+        if has_min and self.interface_band_alpha_min >= self.interface_band_alpha_max:
+            raise ValueError(
+                "interface_band_alpha_min must be < interface_band_alpha_max"
+            )
+        return self
+
+
+# ---------------------------------------------------------------------------
+# Physics configuration (Euler mode)
+# ---------------------------------------------------------------------------
+
+
+class MaterialConfig(BaseModel):
+    """Material properties for stiffened gas EOS."""
+    name: Optional[str] = Field(None, description="Material name (e.g., 'water', 'air')")
+    gamma: float = Field(..., gt=1, description="Heat capacity ratio (γ)")
+    p_infinity: float = Field(0.0, ge=0, description="Stiffness parameter (p_∞). 0 for ideal gas.")
+    rho_ref: Optional[float] = Field(None, gt=0, description="Reference density (for two-phase)")
+
+
+class RiemannStateConfig(BaseModel):
+    """State for one side of a Riemann problem."""
+    rho: float = Field(..., gt=0, description="Density (mixture density for two-phase)")
+    u: float = Field(..., description="Velocity")
+    p: float = Field(..., gt=0, description="Pressure")
+    alpha: Optional[float] = Field(
+        None, ge=0, le=1, description="Volume fraction of phase 1 (for two-phase)"
+    )
+
+
+class EulerInitialConditionsConfig(BaseModel):
+    """Initial conditions for Euler mode."""
+    type: Literal["riemann", "uniform"] = Field(..., description="IC type")
+    # Riemann problem (shock tube)
+    x_discontinuity: Optional[float] = Field(
+        None, description="Location of discontinuity (for riemann type)"
+    )
+    left: Optional[RiemannStateConfig] = Field(None, description="Left state (for riemann type)")
+    right: Optional[RiemannStateConfig] = Field(None, description="Right state (for riemann type)")
+    # Uniform state
+    rho: Optional[float] = Field(None, gt=0, description="Uniform density (for uniform type)")
+    u: Optional[float] = Field(None, description="Uniform velocity (for uniform type)")
+    p: Optional[float] = Field(None, gt=0, description="Uniform pressure (for uniform type)")
+
+    @model_validator(mode="after")
+    def validate_ic_params(self) -> "EulerInitialConditionsConfig":
+        """Validate IC parameters based on type."""
+        if self.type == "riemann":
+            if self.x_discontinuity is None:
+                raise ValueError("Riemann IC requires 'x_discontinuity'")
+            if self.left is None or self.right is None:
+                raise ValueError("Riemann IC requires 'left' and 'right' states")
+        elif self.type == "uniform":
+            if self.rho is None or self.u is None or self.p is None:
+                raise ValueError("Uniform IC requires 'rho', 'u', and 'p'")
+        return self
+
+
+class PhysicsConfig(BaseModel):
+    """Physics mode configuration."""
+    mode: Literal["advection_only", "euler"] = Field(
+        "advection_only",
+        description="Physics mode: 'advection_only' (scalar advection) or 'euler' (compressible Euler)"
+    )
+    # Single-phase: material properties (for single-phase euler)
+    material: Optional[MaterialConfig] = Field(
+        None, description="Material properties (for single-phase euler)"
+    )
+    # Two-phase: phase1 and phase2 materials
+    phase1: Optional[MaterialConfig] = Field(
+        None, description="Phase 1 material (e.g., water). α=1 region."
+    )
+    phase2: Optional[MaterialConfig] = Field(
+        None, description="Phase 2 material (e.g., air). α=0 region."
+    )
+    # Euler initial conditions (required for euler mode)
+    euler_initial_conditions: Optional[EulerInitialConditionsConfig] = Field(
+        None, description="Initial conditions for Euler mode"
+    )
+    # Euler boundary conditions
+    euler_bc: Literal["transmissive", "reflective", "periodic"] = Field(
+        "transmissive", description="Boundary condition for Euler mode"
+    )
+    # Spatial reconstruction
+    use_muscl: bool = Field(
+        True, description="Use MUSCL reconstruction with Barth-Jespersen limiter (2nd order)"
+    )
+    # Two-phase model selection
+    two_phase_model: Literal["mixture", "5eq"] = Field(
+        "5eq",
+        description="Two-phase model: 'mixture' (simplified) or '5eq' (5-equation model)"
+    )
+
+    @property
+    def is_two_phase(self) -> bool:
+        """Check if this is a two-phase simulation."""
+        return self.phase1 is not None and self.phase2 is not None
+
+    @model_validator(mode="after")
+    def validate_euler_params(self) -> "PhysicsConfig":
+        """Euler mode requires material(s) and initial conditions."""
+        if self.mode == "euler":
+            has_single = self.material is not None
+            has_two = self.phase1 is not None and self.phase2 is not None
+            if not has_single and not has_two:
+                raise ValueError(
+                    "Euler mode requires either 'physics.material' (single-phase) "
+                    "or both 'physics.phase1' and 'physics.phase2' (two-phase)"
+                )
+            if has_single and has_two:
+                raise ValueError(
+                    "Specify either 'physics.material' OR 'physics.phase1/phase2', not both"
+                )
+            if self.euler_initial_conditions is None:
+                raise ValueError("Euler mode requires 'physics.euler_initial_conditions'")
+        return self
+
+
+# ---------------------------------------------------------------------------
+# Velocity configuration (constant or expression-based)
+# ---------------------------------------------------------------------------
+
+class ConstantVelocityConfig(BaseModel):
+    """Constant velocity configuration."""
+    type: Literal["constant"] = Field("constant", description="Velocity type")
+    value: list[float] = Field(..., description="Constant velocity vector [u] (1D) or [u, v] (2D)")
+
+
+class ExpressionVelocityConfig(BaseModel):
+    """Expression-based velocity configuration (u(x,y,t), v(x,y,t))."""
+    type: Literal["expression"] = Field("expression", description="Velocity type")
+    u: str = Field(..., description="Expression for u component (can use x, y, t, r, pi, etc.)")
+    v: Optional[str] = Field(None, description="Expression for v component (2D only)")
+
+
+# Union type for velocity: constant or expression
+VelocityConfig = Union[ConstantVelocityConfig, ExpressionVelocityConfig]
+
+
 class CompareFieldConfig(BaseModel):
     """Configuration for a field in compare_fields (multi-field gif overlay)."""
     field: str = Field(..., description="Field name to plot")
@@ -252,6 +419,27 @@ class MonitorConfig(BaseModel):
     show_annotations: Optional[bool] = Field(
         None, description="Show plot annotations: x/y ticks, tick labels, axis titles, plot title (default True)"
     )
+    # Quiver overlay (gif/mp4 2D pcolormesh): overlay vector field on top
+    quiver_overlay_x: Optional[str] = Field(
+        None, description="Field name for quiver x-component (e.g. csf_x). Requires quiver_overlay_y."
+    )
+    quiver_overlay_y: Optional[str] = Field(
+        None, description="Field name for quiver y-component (e.g. csf_y). Requires quiver_overlay_x."
+    )
+    quiver_skip: Optional[int] = Field(
+        None, gt=0, description="Plot every Nth quiver arrow for clarity (default 4)"
+    )
+
+    @model_validator(mode="after")
+    def validate_quiver_overlay(self) -> "MonitorConfig":
+        """Quiver overlay requires both x and y components."""
+        has_x = self.quiver_overlay_x is not None
+        has_y = self.quiver_overlay_y is not None
+        if has_x != has_y:
+            raise ValueError(
+                "quiver_overlay_x and quiver_overlay_y must both be set or both None"
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_output_trigger(self) -> "MonitorConfig":
@@ -291,36 +479,109 @@ class SimulationConfig(BaseModel):
     """Complete simulation configuration."""
     domain: DomainConfig
     time: TimeConfig
-    velocity: list[float] = Field(..., description="Advection velocity vector")
-    fields: list[FieldConfig] = Field(..., min_length=1)
-    solver: SolverConfig
+    # Physics mode (default: advection_only for backward compatibility)
+    physics: Optional[PhysicsConfig] = Field(
+        None, description="Physics configuration (mode, material, etc.)"
+    )
+    # Advection velocity (required for advection_only, not used in euler mode)
+    velocity: Optional[VelocityConfig] = Field(
+        None, description="Advection velocity (constant or expression). Required for advection_only mode."
+    )
+    # Fields for advection (required for advection_only, not used in euler mode)
+    fields: Optional[list[FieldConfig]] = Field(
+        None, description="Fields to advect. Required for advection_only mode."
+    )
+    solver: Optional[SolverConfig] = Field(
+        None, description="Solver config (for advection_only mode)"
+    )
     timestepper: TimeStepperConfig = Field(default_factory=TimeStepperConfig)
     sharpening: Optional[SharpeningConfig] = Field(None)
+    surface_tension: Optional[SurfaceTensionConfig] = Field(None)
     output: OutputConfig = Field(default_factory=OutputConfig)
+
+    @property
+    def physics_mode(self) -> str:
+        """Get the physics mode (advection_only or euler)."""
+        if self.physics is not None:
+            return self.physics.mode
+        return "advection_only"
+
+    @model_validator(mode="after")
+    def validate_mode_requirements(self) -> "SimulationConfig":
+        """Validate required fields based on physics mode."""
+        mode = self.physics_mode
+
+        if mode == "advection_only":
+            # Advection mode requires velocity, fields, and solver
+            if self.velocity is None:
+                raise ValueError(
+                    "advection_only mode requires 'velocity' configuration"
+                )
+            if self.fields is None or len(self.fields) == 0:
+                raise ValueError(
+                    "advection_only mode requires at least one field in 'fields'"
+                )
+            if self.solver is None:
+                raise ValueError(
+                    "advection_only mode requires 'solver' configuration"
+                )
+        elif mode == "euler":
+            # Euler mode: physics config is already validated
+            # Euler mode is currently 1D only
+            if self.domain.ndim != 1:
+                raise ValueError(
+                    "Euler mode currently only supports 1D domains. "
+                    "2D support coming soon."
+                )
+        return self
 
     @model_validator(mode="after")
     def validate_velocity_dimension(self) -> "SimulationConfig":
         """Validate velocity dimension matches domain dimension."""
+        if self.velocity is None:
+            return self  # No velocity in euler mode
+
         ndim = self.domain.ndim
-        if len(self.velocity) != ndim:
-            raise ValueError(
-                f"velocity has {len(self.velocity)} components but domain is {ndim}D "
-                f"(expected {ndim})"
-            )
+        vel = self.velocity
+        if isinstance(vel, ConstantVelocityConfig):
+            if len(vel.value) != ndim:
+                raise ValueError(
+                    f"velocity.value has {len(vel.value)} components but domain is {ndim}D "
+                    f"(expected {ndim})"
+                )
+        elif isinstance(vel, ExpressionVelocityConfig):
+            # For 2D, require both u and v expressions
+            if ndim == 2 and vel.v is None:
+                raise ValueError(
+                    "2D domain requires velocity.v expression (velocity.u and velocity.v)"
+                )
+            # For 1D, v should be None or not used
+            if ndim == 1 and vel.v is not None:
+                raise ValueError(
+                    "1D domain should not have velocity.v expression"
+                )
         return self
 
     @model_validator(mode="after")
     def validate_cfl_warning(self) -> "SimulationConfig":
-        """Warn if CFL > 1."""
+        """Warn if CFL > 1 (only for constant velocity in advection mode)."""
+        if self.velocity is None:
+            return self  # No velocity in euler mode
+
+        vel = self.velocity
+        if not isinstance(vel, ConstantVelocityConfig):
+            # For expression velocity, skip CFL warning (velocity varies spatially)
+            return self
+
         dt = self.time.dt
         dx = self.domain.dx
-        u = abs(self.velocity[0])
+        u = abs(vel.value[0])
         cfl_x = u * dt / dx
         cfl = cfl_x
 
         if self.domain.ndim == 2:
             dy = self.domain.dy
-            v = abs(self.velocity[1])
+            v = abs(vel.value[1])
             cfl_y = v * dt / dy if dy > 0 else 0.0
             cfl = max(cfl_x, cfl_y)
 

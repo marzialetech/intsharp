@@ -86,6 +86,27 @@
 
                     <h2 id="yaml-reference">YAML Configuration Reference</h2>
 
+                    <h3 id="physics-mode">Physics Mode</h3>
+                    <p>intsharp supports two physics modes:</p>
+                    <ul>
+                        <li><strong>advection_only</strong> (default): Scalar advection with optional interface sharpening</li>
+                        <li><strong>euler</strong>: Compressible Euler equations (1D single-phase or two-phase)</li>
+                    </ul>
+                    <p>For <strong>Euler mode</strong>, use <code>physics.mode: euler</code> and configure material(s) and initial conditions. Single-phase example:</p>
+                    <pre><code>physics:
+  mode: euler
+  material:
+    gamma: 1.4       # Ideal gas
+    p_infinity: 0.0
+  euler_initial_conditions:
+    type: riemann
+    x_discontinuity: 0.5
+    left:  {rho: 1.0, u: 0.0, p: 1.0}
+    right: {rho: 0.125, u: 0.0, p: 0.1}
+  euler_bc: transmissive
+  use_muscl: false   # or true for MUSCL + Barth-Jespersen</code></pre>
+                    <p>Two-phase (water-air) uses <code>phase1</code>/<code>phase2</code> and <code>two_phase_model: 5eq</code>. See <a href="unit_tests/sod_shock_tube_1d.html">sod_shock_tube_1d</a> for a single-phase example.</p>
+
                     <h3 id="domain-1d">Domain (1D)</h3>
                     <p>1D domains are <strong>cell-centered</strong>: <code>dx = L/n_points</code>, with grid points at cell centers. This allows CFL = 1 to give exact return after one revolution (no phase drift).</p>
                     <pre><code>domain:

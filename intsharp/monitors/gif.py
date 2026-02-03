@@ -67,6 +67,9 @@ class GIFMonitor(Monitor):
         show_annotations: bool | None = None,
         output_format: str = "gif",
         fps: int = 10,
+        quiver_overlay_x: str | None = None,
+        quiver_overlay_y: str | None = None,
+        quiver_skip: int | None = None,
         **kwargs,
     ):
         super().__init__(output_dir, every_n_steps, at_times)
@@ -82,6 +85,9 @@ class GIFMonitor(Monitor):
         self.show_annotations = show_annotations if show_annotations is not None else True
         self.output_format = output_format.lower()
         self.fps = fps
+        self.quiver_overlay_x = quiver_overlay_x
+        self.quiver_overlay_y = quiver_overlay_y
+        self.quiver_skip = quiver_skip if quiver_skip is not None else 4
 
         # Mode: "single" or "compare"
         self._mode = "compare" if self.compare_fields else "single"
@@ -161,7 +167,12 @@ class GIFMonitor(Monitor):
         if self._mode == "single":
             if self.field_name is None or self.field_name not in fields:
                 return
-            self._frames_single.append(fields[self.field_name].values.copy())
+            frame_data: dict = {"values": fields[self.field_name].values.copy()}
+            if self.quiver_overlay_x and self.quiver_overlay_y:
+                if self.quiver_overlay_x in fields and self.quiver_overlay_y in fields:
+                    frame_data["quiver_x"] = fields[self.quiver_overlay_x].values.copy()
+                    frame_data["quiver_y"] = fields[self.quiver_overlay_y].values.copy()
+            self._frames_single.append(frame_data)
             self._times.append(t)
         else:
             # Compare mode
@@ -195,8 +206,24 @@ class GIFMonitor(Monitor):
         except ImportError:
             import imageio
 
+        # Compute global min/max across all frames for consistent axis bounds
+        all_values = [
+            (frame_data["values"] if isinstance(frame_data, dict) else frame_data)
+            for frame_data in self._frames_single
+        ]
+        global_min = min(float(np.min(v)) for v in all_values)
+        global_max = max(float(np.max(v)) for v in all_values)
+        # Add 5% padding
+        y_range = global_max - global_min if global_max > global_min else 1.0
+        y_min = global_min - 0.05 * y_range
+        y_max = global_max + 0.05 * y_range
+
         images = []
-        for values, t in zip(self._frames_single, self._times):
+        for frame_data, t in zip(self._frames_single, self._times):
+            values = frame_data["values"] if isinstance(frame_data, dict) else frame_data
+            quiver_x = frame_data.get("quiver_x") if isinstance(frame_data, dict) else None
+            quiver_y = frame_data.get("quiver_y") if isinstance(frame_data, dict) else None
+
             if self._ndim == 1:
                 fig, ax = plt.subplots(figsize=(8, 4))
                 ax.plot(self._domain_x, values, "b-", linewidth=1.5)
@@ -208,7 +235,7 @@ class GIFMonitor(Monitor):
                     ax.set_xticks([])
                     ax.set_yticks([])
                 ax.set_xlim(self._x_min, self._x_max)
-                ax.set_ylim(-0.1, 1.1)
+                ax.set_ylim(y_min, y_max)
                 ax.grid(True, alpha=0.3)
             else:
                 fig, ax = plt.subplots(figsize=(6, 6))
@@ -225,13 +252,14 @@ class GIFMonitor(Monitor):
                         linewidths=2,
                     )
                 else:
+                    # Use computed global bounds for consistent coloring across frames
                     pcm = ax.pcolormesh(
                         self._domain_X,
                         self._domain_Y,
                         values,
                         cmap=self.colormap,
-                        vmin=0.0,
-                        vmax=1.0,
+                        vmin=y_min,
+                        vmax=y_max,
                         shading="auto",
                     )
                     if self.show_colorbar:
@@ -244,6 +272,29 @@ class GIFMonitor(Monitor):
                             levels=self.contour_levels,
                             colors=[self.contour_overlay_color],
                             linewidths=2,
+                        )
+                    # Quiver overlay (e.g. surface force vectors)
+                    if quiver_x is not None and quiver_y is not None:
+                        skip = self.quiver_skip
+                        U = quiver_x[::skip, ::skip]
+                        V = quiver_y[::skip, ::skip]
+                        mag = np.sqrt(U**2 + V**2)
+                        max_mag = float(np.max(mag)) if np.any(mag > 0) else 1.0
+                        ny, nx = self._domain_X.shape
+                        dx = (self._x_max - self._x_min) / max(nx - 1, 1)
+                        dy = (self._y_max - self._y_min) / max(ny - 1, 1)
+                        max_arrow_length = 6 * min(dx, dy)  # ~6 grid cells
+                        scale = max_mag / max_arrow_length if max_mag > 0 else 1.0
+                        U_norm = U / scale
+                        V_norm = V / scale
+                        ax.quiver(
+                            self._domain_X[::skip, ::skip],
+                            self._domain_Y[::skip, ::skip],
+                            U_norm,
+                            V_norm,
+                            color="black",
+                            scale_units="xy",
+                            angles="xy",
                         )
                 if self.show_annotations:
                     ax.set_xlabel("x")
@@ -278,6 +329,20 @@ class GIFMonitor(Monitor):
         except ImportError:
             import imageio
 
+        # Compute global min/max across all frames and all fields
+        all_values = []
+        for frame_data in self._frames_compare:
+            for fname in frame_data:
+                all_values.append(frame_data[fname])
+        if all_values:
+            global_min = min(float(np.min(v)) for v in all_values)
+            global_max = max(float(np.max(v)) for v in all_values)
+        else:
+            global_min, global_max = 0.0, 1.0
+        y_range = global_max - global_min if global_max > global_min else 1.0
+        y_min = global_min - 0.05 * y_range
+        y_max = global_max + 0.05 * y_range
+
         images = []
         for frame_data, t in zip(self._frames_compare, self._times):
             if self._ndim == 1:
@@ -298,7 +363,7 @@ class GIFMonitor(Monitor):
                         label=fname,
                     )
                 ax.set_xlim(self._x_min, self._x_max)
-                ax.set_ylim(-0.1, 1.1)
+                ax.set_ylim(y_min, y_max)
                 if self.show_annotations:
                     ax.set_xlabel("x")
                     ax.set_ylabel("value")

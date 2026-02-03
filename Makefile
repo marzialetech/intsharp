@@ -1,5 +1,5 @@
 # IntSharp Makefile
-.PHONY: clean run install
+.PHONY: clean run install test
 
 # -------------------------------------------------------------------------
 # Simulation
@@ -12,6 +12,10 @@ run:
 # Install Python dependencies
 install:
 	pip install -r requirements.txt
+
+# Run unit tests
+test:
+	pytest tests/ -v
 
 # Clean build artifacts
 clean:

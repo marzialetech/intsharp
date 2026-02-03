@@ -1,0 +1,83 @@
+# Sod Shock Tube Test (1D Compressible Euler)
+#
+# Classic Riemann problem for validating compressible flow solvers.
+# 
+# Initial conditions:
+#   Left (x < 0.5):  ρ = 1.0,   u = 0, p = 1.0
+#   Right (x ≥ 0.5): ρ = 0.125, u = 0, p = 0.1
+#
+# Expected features at t = 0.2:
+#   - Left-moving rarefaction fan
+#   - Contact discontinuity (moves right)
+#   - Right-moving shock wave
+#
+# Reference: Sod, G.A. (1978). "A survey of several finite difference methods
+#            for systems of nonlinear hyperbolic conservation laws."
+#            Journal of Computational Physics, 27(1), 1-31.
+
+domain:
+  x_min: 0.0
+  x_max: 1.0
+  n_points: 400
+
+time:
+  dt: 0.0001
+  n_steps: 2000    # t_final = 0.2
+
+physics:
+  mode: euler
+  
+  material:
+    gamma: 1.4       # Ideal gas (air)
+    p_infinity: 0.0
+  
+  euler_initial_conditions:
+    type: riemann
+    x_discontinuity: 0.5
+    left:
+      rho: 1.0
+      u: 0.0
+      p: 1.0
+    right:
+      rho: 0.125
+      u: 0.0
+      p: 0.1
+  
+  euler_bc: transmissive
+
+output:
+  directory: ./unit_tests/sod_shock_tube_1d
+  monitors:
+    - type: console
+    
+    # Animated evolution of all primitive variables
+    - type: gif
+      field: rho
+      every_n_steps: 50
+      style: contour
+
+    - type: gif
+      field: u
+      every_n_steps: 50
+      style: contour
+
+    - type: gif
+      field: p
+      every_n_steps: 50
+      style: contour
+
+    - type: gif
+      field: E
+      every_n_steps: 50
+      style: contour
+
+    # Specific internal energy (e = p / ((γ-1)ρ)) - matches reference ε
+    - type: gif
+      field: e_int
+      every_n_steps: 50
+      style: contour
+
+    # Text snapshots of all variables (single file with all columns)
+    - type: txt
+      fields: [rho, u, p, E, e_int, rho_u]
+      every_n_steps: 500
