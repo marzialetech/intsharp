@@ -27,20 +27,271 @@
                 <div class="window-header"><span class="window-title">compressible Euler</span></div>
                 <div class="window-body">
                     <p><a href="../components.html">&larr; Components</a></p>
-                    <div class="file-path">intsharp/solvers/euler_1d.py, euler_5eq_1d.py | intsharp/flux_ausm.py | intsharp/eos.py</div>
-                    <h2>1D Compressible Euler</h2>
-                    <p>Single-phase and two-phase compressible flow with AUSM+UP flux, stiffened-gas EOS, optional MUSCL/Barth-Jespersen reconstruction.</p>
-                    <h3>Single-phase (3 equations)</h3>
-                    <p>Mass, momentum, energy conservation. Variables: ρ, ρu, E. Primitive: ρ, u, p.</p>
-                    <h3>Two-phase 5-equation model</h3>
-                    <p>Partial densities (α₁ρ₁, α₂ρ₂), mixture momentum (ρu), mixture energy (E), volume fraction (α₁). Non-conservative upwind advection for α.</p>
-                    <h3>Key components</h3>
+                    <div class="file-path">intsharp/solvers/euler_1d.py, euler_5eq_1d.py | intsharp/flux_ausm.py | intsharp/eos.py | intsharp/limiters.py</div>
+
+                    <nav class="page-toc" aria-label="Page contents">
+                        <strong>Contents</strong>
+                        <ul>
+                            <li><a href="#overview">Overview</a></li>
+                            <li><a href="#pde-system">PDE System</a></li>
+                            <li><a href="#eos">Equation of State</a></li>
+                            <li><a href="#decoding">Decoding (Conserved → Primitive)</a></li>
+                            <li><a href="#flux">Flux Calculation (AUSM+UP)</a></li>
+                            <li><a href="#limiter">Slope Limiter (MUSCL + Barth–Jespersen)</a></li>
+                            <li><a href="#time-integration">Time Integration</a></li>
+                            <li><a href="#boundary-conditions">Boundary Conditions</a></li>
+                            <li><a href="#two-phase">Two-Phase Extensions</a></li>
+                            <li><a href="#implementation">Implementation & File Locations</a></li>
+                            <li><a href="#references">References</a></li>
+                        </ul>
+                    </nav>
+
+                    <h2 id="overview">Overview</h2>
+                    <p>The compressible Euler solver implements finite-volume schemes for inviscid compressible flow in 1D. Two formulations are supported:</p>
                     <ul>
-                        <li><strong>Flux:</strong> AUSM+UP (Liou 2006) — Mach and pressure splitting</li>
-                        <li><strong>EOS:</strong> Stiffened gas — ideal gas (p_∞=0) or water (γ≈7.1, p_∞≈3×10⁸)</li>
-                        <li><strong>Reconstruction:</strong> Optional MUSCL + Barth-Jespersen limiter (2nd order)</li>
+                        <li><strong>Single-phase (3 equations):</strong> Mass, momentum, energy conservation for a single fluid.</li>
+                        <li><strong>Two-phase (5 equations):</strong> Allaire–Clerc–Kokh / Kapila et al. model with pressure equilibrium, tracking partial densities, mixture momentum/energy, and volume fraction.</li>
                     </ul>
-                    <p>See <a href="../unit_tests/sod_shock_tube_1d.html">sod_shock_tube_1d</a> for validation.</p>
+                    <p>Both use the <strong>stiffened gas</strong> equation of state, <strong>AUSM+UP</strong> flux splitting, optional <strong>MUSCL</strong> reconstruction with Barth–Jespersen limiting, and explicit forward Euler time integration.</p>
+
+                    <h2 id="pde-system">PDE System</h2>
+
+                    <h3>Single-phase (3 equations)</h3>
+                    <p>Conservation of mass, momentum, and energy:</p>
+                    <div class="math-block">\[
+\frac{\partial \rho}{\partial t} + \frac{\partial (\rho u)}{\partial x} = 0
+\]</div>
+                    <div class="math-block">\[
+\frac{\partial (\rho u)}{\partial t} + \frac{\partial (\rho u^2 + p)}{\partial x} = 0
+\]</div>
+                    <div class="math-block">\[
+\frac{\partial E}{\partial t} + \frac{\partial \bigl((E+p)u\bigr)}{\partial x} = 0
+\]</div>
+                    <p><strong>Conserved variables:</strong> \(\mathbf{U} = (\rho,\, \rho u,\, E)\).</p>
+                    <p><strong>Total energy per unit volume:</strong> \(E = \rho e + \tfrac{1}{2}\rho u^2\), where \(e\) is specific internal energy.</p>
+
+                    <h3>Two-phase 5-equation model</h3>
+                    <p>Allaire–Clerc–Kokh / Kapila et al. model with pressure equilibrium (\(p_1 = p_2 = p\)):</p>
+                    <div class="math-block">\[
+\frac{\partial (\alpha_1\rho_1)}{\partial t} + \frac{\partial (\alpha_1\rho_1 u)}{\partial x} = 0
+\]</div>
+                    <div class="math-block">\[
+\frac{\partial (\alpha_2\rho_2)}{\partial t} + \frac{\partial (\alpha_2\rho_2 u)}{\partial x} = 0
+\]</div>
+                    <div class="math-block">\[
+\frac{\partial (\rho u)}{\partial t} + \frac{\partial (\rho u^2 + p)}{\partial x} = 0
+\]</div>
+                    <div class="math-block">\[
+\frac{\partial E}{\partial t} + \frac{\partial \bigl((E+p)u\bigr)}{\partial x} = 0
+\]</div>
+                    <div class="math-block">\[
+\frac{\partial \alpha_1}{\partial t} + u\,\frac{\partial \alpha_1}{\partial x} = 0 \quad \text{(non-conservative)}
+\]</div>
+                    <p><strong>Conserved variables:</strong> \((\alpha_1\rho_1,\, \alpha_2\rho_2,\, \rho u,\, E,\, \alpha_1)\).</p>
+                    <p><strong>Mixture density:</strong> \(\rho = \alpha_1\rho_1 + \alpha_2\rho_2\), with \(\alpha_2 = 1 - \alpha_1\).</p>
+
+                    <h2 id="eos">Equation of State (Stiffened Gas)</h2>
+                    <p>Both phases use the stiffened gas EOS:</p>
+                    <div class="math-block">\[
+p = (\gamma - 1)\,\rho e - \gamma p_\infty
+\]</div>
+                    <p><strong>Specific internal energy:</strong></p>
+                    <div class="math-block">\[
+e = \frac{p + \gamma p_\infty}{(\gamma - 1)\rho}
+\]</div>
+                    <p><strong>Sound speed:</strong></p>
+                    <div class="math-block">\[
+c = \sqrt{\frac{\gamma(p + p_\infty)}{\rho}}
+\]</div>
+                    <p><strong>Total energy from primitives:</strong></p>
+                    <div class="math-block">\[
+E = \rho e + \tfrac{1}{2}\rho u^2 = \frac{p + \gamma p_\infty}{\gamma - 1} + \tfrac{1}{2}\rho u^2
+\]</div>
+                    <p><strong>Specific total enthalpy:</strong> \(H = (E + p) / \rho\).</p>
+                    <p><strong>Typical parameters:</strong></p>
+                    <ul>
+                        <li>Ideal gas (air): \(\gamma = 1.4\), \(p_\infty = 0\).</li>
+                        <li>Water: \(\gamma \approx 4.4\), \(p_\infty \approx 6\times 10^8\) Pa.</li>
+                    </ul>
+
+                    <h2 id="decoding">Decoding (Conserved → Primitive)</h2>
+
+                    <h3>Single-phase</h3>
+                    <p>From \(\mathbf{U} = (\rho,\, \rho u,\, E)\):</p>
+                    <div class="math-block">\[
+u = \frac{\rho u}{\rho}, \qquad
+\rho e = E - \tfrac{1}{2}\rho u^2, \qquad
+p = (\gamma-1)\,\rho e - \gamma p_\infty
+\]</div>
+                    <p>Enthalpy for flux: \(H = (E + p) / \rho\).</p>
+
+                    <h3>Two-phase (5-eq)</h3>
+                    <p>From \((\alpha_1\rho_1,\, \alpha_2\rho_2,\, \rho u,\, E,\, \alpha_1)\):</p>
+                    <div class="math-block">\[
+\rho = \alpha_1\rho_1 + \alpha_2\rho_2, \quad
+u = \frac{\rho u}{\rho}, \quad
+\rho_1 = \frac{\alpha_1\rho_1}{\alpha_1}, \quad
+\rho_2 = \frac{\alpha_2\rho_2}{\alpha_2}
+\]</div>
+                    <p><strong>Pressure from mixture internal energy</strong> (pressure equilibrium):</p>
+                    <div class="math-block">\[
+E_{\text{int}} = E - \tfrac{1}{2}\rho u^2 = \alpha_1\,\frac{p + \gamma_1 p_{\infty,1}}{\gamma_1 - 1} + \alpha_2\,\frac{p + \gamma_2 p_{\infty,2}}{\gamma_2 - 1}
+\]</div>
+                    <p>Solve for \(p\): \(E_{\text{int}} = p\,A + B\) with</p>
+                    <div class="math-block">\[
+A = \frac{\alpha_1}{\gamma_1 - 1} + \frac{\alpha_2}{\gamma_2 - 1}, \qquad
+B = \frac{\alpha_1\gamma_1 p_{\infty,1}}{\gamma_1 - 1} + \frac{\alpha_2\gamma_2 p_{\infty,2}}{\gamma_2 - 1}
+\]</div>
+                    <p>Hence \(p = (E_{\text{int}} - B) / A\).</p>
+                    <p><strong>Mixture sound speed (Wood's formula):</strong></p>
+                    <div class="math-block">\[
+\frac{1}{\rho c^2} = \frac{\alpha_1}{\rho_1 c_1^2} + \frac{\alpha_2}{\rho_2 c_2^2}
+\quad \Rightarrow \quad
+c = \sqrt{\frac{1}{\rho\left(\frac{\alpha_1}{\rho_1 c_1^2} + \frac{\alpha_2}{\rho_2 c_2^2}\right)}}
+\]</div>
+                    <p>Pure phases: \(c \to c_1\) when \(\alpha_1 \approx 1\), \(c \to c_2\) when \(\alpha_1 \approx 0\).</p>
+
+                    <h2 id="flux">Flux Calculation (AUSM+UP)</h2>
+                    <p>Liou (2006). Interface flux at \(i{+}1/2\) between left (L) and right (R) states.</p>
+
+                    <h3>1. Interface sound speed</h3>
+                    <div class="math-block">\[
+a_{1/2} = \tfrac{1}{2}(c_L + c_R)
+\]</div>
+
+                    <h3>2. Mach number splitting (M₄±)</h3>
+                    <p>\(M_L = u_L/a_{1/2}\), \(M_R = u_R/a_{1/2}\). Fourth-order polynomials:</p>
+                    <div class="math-block">\[
+M_4^+(M) = \begin{cases} M_1^+ = \tfrac{1}{2}(M + |M|) & |M| \ge 1 \\[4pt]
+M_2^+(1 - 16\beta M_2^-) & |M| < 1 \end{cases}
+\]</div>
+                    <div class="math-block">\[
+M_4^-(M) = \begin{cases} M_1^- = \tfrac{1}{2}(M - |M|) & |M| \ge 1 \\[4pt]
+M_2^-(1 + 16\beta M_2^+) & |M| < 1 \end{cases}
+\]</div>
+                    <p>where \(M_2^+ = \tfrac{1}{4}(M+1)^2\), \(M_2^- = -\tfrac{1}{4}(M-1)^2\), \(\beta = 1/8\).</p>
+                    <p><strong>Pressure diffusion</strong> (low-speed):</p>
+                    <div class="math-block">\[
+\bar{M}^2 = \tfrac{1}{2}(M_L^2 + M_R^2), \qquad
+M_p = -K_p\,\max(1 - \bar{M}^2,\, 0)\,\frac{p_R - p_L}{\rho_{\text{avg}}\,a_{1/2}^2}
+\]</div>
+                    <div class="math-block">\[
+M_{1/2} = M_4^+(M_L) + M_4^-(M_R) + M_p
+\]</div>
+
+                    <h3>3. Pressure splitting (P₅±)</h3>
+                    <div class="math-block">\[
+P_5^+(M) = \begin{cases} M_1^+/M & |M| \ge 1 \\[4pt]
+M_2^+\bigl((2-M) - 16\alpha M M_2^-\bigr) & |M| < 1 \end{cases}
+\]</div>
+                    <div class="math-block">\[
+P_5^-(M) = \begin{cases} M_1^-/M & |M| \ge 1 \\[4pt]
+M_2^-\bigl((-2-M) + 16\alpha M M_2^+\bigr) & |M| < 1 \end{cases}
+\]</div>
+                    <p>\(\alpha = 3/16\).</p>
+                    <p><strong>Velocity diffusion:</strong></p>
+                    <div class="math-block">\[
+p_u = -K_u\,P_5^+(M_L)\,P_5^-(M_R)\cdot 2\rho_{\text{avg}}\,a_{1/2}\,(u_R - u_L)
+\]</div>
+                    <div class="math-block">\[
+p_{1/2} = P_5^+(M_L)\,p_L + P_5^-(M_R)\,p_R + p_u
+\]</div>
+                    <p>Default: \(K_p = 0.25\), \(K_u = 0.75\).</p>
+
+                    <h3>4. Mass and convective fluxes</h3>
+                    <div class="math-block">\[
+\rho_{\text{upwind}} = \begin{cases} \rho_L & M_{1/2} \ge 0 \\ \rho_R & M_{1/2} < 0 \end{cases}, \qquad
+\dot{m} = a_{1/2}\,M_{1/2}\,\rho_{\text{upwind}}
+\]</div>
+                    <div class="math-block">\[
+\mathbf{F} = \dot{m}\begin{bmatrix} 1 \\ u_{\text{upwind}} \\ H_{\text{upwind}} \end{bmatrix} + \begin{bmatrix} 0 \\ p_{1/2} \\ 0 \end{bmatrix}
+\]</div>
+                    <p>\(H = (E + p)/\rho\).</p>
+
+                    <h2 id="limiter">Slope Limiter (MUSCL + Barth–Jespersen)</h2>
+                    <p>Optional second-order reconstruction. Cell-centered \(q_i\) with ghost cells.</p>
+
+                    <h3>Centered gradient</h3>
+                    <div class="math-block">\[
+\Delta q_i = \tfrac{1}{2}(q_{i+1} - q_{i-1})
+\]</div>
+
+                    <h3>Barth–Jespersen limiter</h3>
+                    <p>Compute \(\phi_i \in [0, 1]\) such that \(q_i \pm \tfrac{1}{2}\phi_i\,\Delta q_i\) stays within \([q_{\min},\, q_{\max}]\) of cell \(i\) and its neighbors.</p>
+                    <div class="math-block">\[
+q_{\min} = \min(q_{i-1},\, q_i,\, q_{i+1}), \qquad
+q_{\max} = \max(q_{i-1},\, q_i,\, q_{i+1})
+\]</div>
+                    <p>For each face \(q_{\text{face}} = q_i \pm \tfrac{1}{2}\Delta q_i\): if \(q_{\text{face}}\) exceeds bounds, reduce \(\phi\) so the extrapolated value lies within bounds. Take the minimum over both faces.</p>
+
+                    <h3>Reconstructed interface states</h3>
+                    <div class="math-block">\[
+q_{L,i+1/2} = q_i + \tfrac{1}{2}\,\phi_i\,\Delta q_i, \qquad
+q_{R,i+1/2} = q_{i+1} - \tfrac{1}{2}\,\phi_{i+1}\,\Delta q_{i+1}
+\]</div>
+                    <p><strong>Positivity enforced</strong> for \(\rho\), \(p\), \(c\). First-order: \(q_L = q_i\), \(q_R = q_{i+1}\).</p>
+
+                    <h2 id="time-integration">Time Integration</h2>
+                    <p>Forward Euler (explicit):</p>
+                    <div class="math-block">\[
+\mathbf{U}_i^{n+1} = \mathbf{U}_i^n - \frac{\Delta t}{\Delta x}\bigl(\mathbf{F}_{i+1/2} - \mathbf{F}_{i-1/2}\bigr)
+\]</div>
+                    <p><strong>CFL condition:</strong> \(\text{CFL} = \max(|u| + c)\,\Delta t/\Delta x < 1\).</p>
+
+                    <h2 id="boundary-conditions">Boundary Conditions</h2>
+                    <ul>
+                        <li><strong>Transmissive:</strong> Zero-gradient (copy edge values to ghost cells).</li>
+                        <li><strong>Reflective:</strong> Mirror state with reversed velocity (\(u \to -u\)).</li>
+                        <li><strong>Periodic:</strong> Wrap around (left ghost = right interior, right ghost = left interior).</li>
+                    </ul>
+
+                    <h2 id="two-phase">Two-Phase Extensions</h2>
+
+                    <h3>1. Wood's formula at interfaces</h3>
+                    <p>Interface sound speeds \(c_L\), \(c_R\) use Wood's formula with phase densities \(\rho_1\), \(\rho_2\) and phase sound speeds \(c_1\), \(c_2\) from stiffened gas.</p>
+
+                    <h3>2. Flux vector splitting (v_riem)</h3>
+                    <p>Interface velocity from mass flux: \(v_{\text{riem}} = \dot{m}/\rho_{\text{upwind}}\).</p>
+                    <p>Partial density fluxes:</p>
+                    <div class="math-block">\[
+F_{\alpha_1\rho_1} = (\alpha_1\rho_1)_{\text{upwind}}\,v_{\text{riem}}, \qquad
+F_{\alpha_2\rho_2} = (\alpha_2\rho_2)_{\text{upwind}}\,v_{\text{riem}}
+\]</div>
+                    <p>Ensures \(F_{\alpha_1\rho_1} + F_{\alpha_2\rho_2} = F_\rho\).</p>
+
+                    <h3>3. Volume fraction flux</h3>
+                    <p>Non-conservative \(\alpha\) advection: \(F_{\alpha_1} = \alpha_{1,\text{upwind}}\,v_{\text{riem}}\).</p>
+                    <p><strong>Corrective term</strong> (dissipative, for stability at interfaces):</p>
+                    <div class="math-block">\[
+F_{\alpha_1} \mathrel{+}= K_\alpha\,(u_L - u_R)\,\bar{\alpha}(1 - \bar{\alpha}), \quad
+\bar{\alpha} = \tfrac{1}{2}(\alpha_{1,L} + \alpha_{1,R}), \quad K_\alpha = 0.1
+\]</div>
+
+                    <h3>4. Post-step α normalization</h3>
+                    <p>After each step: \(\alpha_1 \leftarrow (\alpha_1\rho_1) / \rho\) to enforce consistency with partial densities and \(\alpha_1 + \alpha_2 = 1\).</p>
+
+                    <h2 id="implementation">Implementation & File Locations</h2>
+                    <table>
+                        <thead>
+                            <tr><th>Component</th><th>File</th><th>Function / Class</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Single-phase 1D solver</td><td><code>intsharp/solvers/euler_1d.py</code></td><td><code>euler_step_1d</code>, <code>EulerState1D</code></td></tr>
+                            <tr><td>5-equation two-phase solver</td><td><code>intsharp/solvers/euler_5eq_1d.py</code></td><td><code>euler_step_5eq_1d</code>, <code>FiveEqState1D</code></td></tr>
+                            <tr><td>AUSM+UP flux</td><td><code>intsharp/flux_ausm.py</code></td><td><code>ausm_plus_up_flux_1d</code>, <code>ausm_plus_up_flux_1d_with_v_riem</code></td></tr>
+                            <tr><td>Stiffened gas EOS</td><td><code>intsharp/eos.py</code></td><td><code>sound_speed</code>, <code>pressure_from_energy</code>, <code>enthalpy</code></td></tr>
+                            <tr><td>Wood's mixture sound speed</td><td><code>intsharp/eos.py</code></td><td><code>mixture_sound_speed_wood</code></td></tr>
+                            <tr><td>MUSCL + Barth–Jespersen</td><td><code>intsharp/limiters.py</code></td><td><code>muscl_reconstruct_1d</code>, <code>barth_jespersen_1d</code></td></tr>
+                        </tbody>
+                    </table>
+
+                    <h2 id="references">References</h2>
+                    <ul>
+                        <li>Liou, M.S. (2006). A sequel to AUSM, Part II: AUSM+-up for all speeds. <em>J. Comput. Phys.</em> 214, 137–170.</li>
+                        <li>Allaire, G., Clerc, S., Kokh, S. (2002). A five-equation model for the simulation of interfaces between compressible fluids. <em>J. Comput. Phys.</em> 181, 577–616.</li>
+                        <li>Kapila et al. (2001). Two-phase modeling of deflagration-to-detonation transition in granular materials.</li>
+                    </ul>
+                    <p>Validation: <a href="../unit_tests/sod_shock_tube_1d.html">sod_shock_tube_1d</a>, <a href="../unit_tests/water_air_shock_tube_1d.html">water_air_shock_tube_1d</a>.</p>
                 </div>
             </div>
         </main>

@@ -14,7 +14,9 @@ time:
   dt: 0.00049        # CFL = 0.5: dt = 0.5*dx/u, dx = 1/2042
   n_steps: 4084     # 1 revolution: T = 2s
 
-velocity: [0.5, 0.0]
+velocity:
+  type: constant
+  value: [0.5, 0.0]
 
 fields:
   - name: alpha

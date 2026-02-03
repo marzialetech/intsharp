@@ -1,0 +1,58 @@
+# Rigid body rotation test: slotted disk, 1 revolution about (0.5, 0.5)
+# Domain: [0,1]² standard unit square
+# Velocity: u = -ω(y - 0.5), v = ω(x - 0.5) with ω = 2π (T = 1 s)
+# This is a classic benchmark for advection with spatially-varying velocity.
+
+domain:
+  x_min: 0.0
+  x_max: 1.0
+  n_points_x: 100
+  y_min: 0.0
+  y_max: 1.0
+  n_points_y: 100
+
+time:
+  dt: 0.0005        # Small dt for stability (max |u| ~ 2π * 0.5√2 ≈ 4.4)
+  n_steps: 2000     # 1 revolution: T = 1 s
+
+velocity:
+  type: expression
+  u: "-2*pi*(y - 0.5)"   # ω = 2π, rotation about (0.5, 0.5)
+  v: "2*pi*(x - 0.5)"
+
+fields:
+  - name: alpha
+    initial_condition_image: "slotted_disk.png"
+    boundary:
+      type: periodic
+
+solver:
+  type: upwind
+
+timestepper:
+  type: euler
+
+sharpening:
+  enabled: true
+  method: pm
+  eps_target: 0.02
+  strength: 0.1
+
+surface_tension:
+  enabled: true
+  sigma: 0.07
+  source_field: alpha
+
+output:
+  monitors:
+    - type: console
+      every_n_steps: 100
+    - type: gif
+      every_n_steps: 40   # 50 frames
+      field: alpha
+      style: pcolormesh
+    - type: gif
+      every_n_steps: 40
+      field: kappa
+      style: pcolormesh
+      colormap: RdBu_r

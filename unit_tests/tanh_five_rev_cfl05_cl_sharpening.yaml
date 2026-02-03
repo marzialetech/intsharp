@@ -10,7 +10,9 @@ time:
   dt: 0.01         # CFL = 0.5
   n_steps: 1000    # 5 revolutions = 10 s
 
-velocity: [0.5]
+velocity:
+  type: constant
+  value: [0.5]
 
 fields:
   - name: alpha

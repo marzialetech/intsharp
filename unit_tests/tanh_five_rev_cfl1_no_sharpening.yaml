@@ -10,7 +10,9 @@ time:
   dt: 0.02        # CFL = u*dt/dx = 1 exactly
   n_steps: 500    # 5 revolutions = 5*100 steps
 
-velocity: [0.5]
+velocity:
+  type: constant
+  value: [0.5]
 
 fields:
   - name: alpha

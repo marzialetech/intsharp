@@ -1,0 +1,34 @@
+# 2D advection test using "intsharp" text image as initial condition
+# 5 revolutions, 100 frames
+
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points_x: 200
+  y_min: -0.5
+  y_max: 0.5
+  n_points_y: 100
+
+time:
+  dt: 0.005
+  n_steps: 2000   # 5 revolutions: T = 5 * L / u = 5 * 1 / 0.5 = 10s
+
+velocity:
+  type: constant
+  value: [0.5, 0.0]
+
+fields:
+  - name: alpha
+    initial_condition_image: "intsharp_text.png"
+    boundary:
+      type: periodic
+
+solver:
+  type: upwind
+
+output:
+  monitors:
+    - type: console
+    - type: gif
+      every_n_steps: 20   # 100 frames
+      field: alpha

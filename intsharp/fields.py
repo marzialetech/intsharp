@@ -161,6 +161,131 @@ def evaluate_expression_2d(
 
 
 # ---------------------------------------------------------------------------
+# Velocity expression evaluation
+# ---------------------------------------------------------------------------
+
+def evaluate_velocity_expression_1d(
+    u_expr: str,
+    x: NDArray[np.float64],
+    t: float,
+) -> NDArray[np.float64]:
+    """
+    Evaluate a 1D velocity expression u(x, t).
+
+    Parameters
+    ----------
+    u_expr : str
+        Expression for u (e.g., "0.5", "sin(2*pi*x)").
+    x : NDArray
+        1D grid coordinates.
+    t : float
+        Current time.
+
+    Returns
+    -------
+    NDArray
+        Velocity values at each grid point (shape matches x).
+    """
+    namespace = SAFE_NAMESPACE.copy()
+    namespace["x"] = x
+    namespace["t"] = t
+
+    try:
+        result = eval(u_expr, {"__builtins__": {}}, namespace)
+    except Exception as e:
+        raise ValueError(
+            f"Failed to evaluate velocity expression: {u_expr!r}\n"
+            f"Error: {e}"
+        ) from e
+
+    result = np.asarray(result, dtype=np.float64)
+    if result.shape != x.shape:
+        if result.ndim == 0:
+            result = np.full_like(x, result)
+        else:
+            raise ValueError(
+                f"Velocity expression result has shape {result.shape}, "
+                f"expected {x.shape}"
+            )
+    return result
+
+
+def evaluate_velocity_expression_2d(
+    u_expr: str,
+    v_expr: str,
+    X: NDArray[np.float64],
+    Y: NDArray[np.float64],
+    t: float,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """
+    Evaluate 2D velocity expressions u(x, y, t) and v(x, y, t).
+
+    Parameters
+    ----------
+    u_expr : str
+        Expression for u component (e.g., "-2*pi*(y - 0.5)").
+    v_expr : str
+        Expression for v component (e.g., "2*pi*(x - 0.5)").
+    X : NDArray
+        2D meshgrid of x coordinates (shape: ny, nx).
+    Y : NDArray
+        2D meshgrid of y coordinates (shape: ny, nx).
+    t : float
+        Current time.
+
+    Returns
+    -------
+    tuple[NDArray, NDArray]
+        (u_arr, v_arr) velocity components at each grid point.
+    """
+    namespace = SAFE_NAMESPACE.copy()
+    namespace["x"] = X
+    namespace["y"] = Y
+    namespace["r"] = np.sqrt(X**2 + Y**2)
+    namespace["t"] = t
+
+    # Evaluate u
+    try:
+        u_result = eval(u_expr, {"__builtins__": {}}, namespace)
+    except Exception as e:
+        raise ValueError(
+            f"Failed to evaluate velocity.u expression: {u_expr!r}\n"
+            f"Error: {e}"
+        ) from e
+
+    u_result = np.asarray(u_result, dtype=np.float64)
+    if u_result.shape != X.shape:
+        if u_result.ndim == 0:
+            u_result = np.full_like(X, u_result)
+        else:
+            raise ValueError(
+                f"velocity.u expression result has shape {u_result.shape}, "
+                f"expected {X.shape}"
+            )
+
+    # Evaluate v
+    try:
+        v_result = eval(v_expr, {"__builtins__": {}}, namespace)
+    except Exception as e:
+        raise ValueError(
+            f"Failed to evaluate velocity.v expression: {v_expr!r}\n"
+            f"Error: {e}"
+        ) from e
+
+    v_result = np.asarray(v_result, dtype=np.float64)
+    if v_result.shape != X.shape:
+        if v_result.ndim == 0:
+            v_result = np.full_like(X, v_result)
+        else:
+            raise ValueError(
+                f"velocity.v expression result has shape {v_result.shape}, "
+                f"expected {X.shape}"
+            )
+
+    return u_result, v_result
+
+
+# ---------------------------------------------------------------------------
 # Image-based initial condition
 # ---------------------------------------------------------------------------
 

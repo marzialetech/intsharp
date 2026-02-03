@@ -10,7 +10,9 @@ time:
   dt: 0.01         # CFL = 0.5
   n_steps: 2000   # 10 revolutions = 20 s
 
-velocity: [0.5]
+velocity:
+  type: constant
+  value: [0.5]
 
 fields:
   - name: alpha_no_sharp
