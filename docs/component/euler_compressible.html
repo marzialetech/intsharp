@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>compressible Euler - intsharp</title>
+    <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <script src="../katex-render.js"></script>
+</head>
+<body>
+    <div class="app">
+        <nav class="sidebar">
+            <div class="sidebar-header"><h1>intsharp</h1><span class="version">v1.0</span></div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search..." autocomplete="off"></div>
+            <ul class="nav-list" id="nav-list">
+                <li><a href="../index.html" data-page="home">Home</a></li>
+                <li><a href="../install.html" data-page="install">Installation</a></li>
+                <li><a href="../guide.html" data-page="guide">Running Simulations</a></li>
+                <li><a href="../components.html" class="active" data-page="components">Components</a></li>
+                <li><a href="../unit-tests.html" data-page="unit-tests">Unit Tests</a></li>
+            </ul>
+            <div class="sidebar-footer"><a href="https://github.com/marzialetech/intsharp" target="_blank">GitHub</a></div>
+        </nav>
+        <main class="content">
+            <div class="window">
+                <div class="window-header"><span class="window-title">compressible Euler</span></div>
+                <div class="window-body">
+                    <p><a href="../components.html">&larr; Components</a></p>
+                    <div class="file-path">intsharp/solvers/euler_1d.py, euler_5eq_1d.py | intsharp/flux_ausm.py | intsharp/eos.py</div>
+                    <h2>1D Compressible Euler</h2>
+                    <p>Single-phase and two-phase compressible flow with AUSM+UP flux, stiffened-gas EOS, optional MUSCL/Barth-Jespersen reconstruction.</p>
+                    <h3>Single-phase (3 equations)</h3>
+                    <p>Mass, momentum, energy conservation. Variables: ρ, ρu, E. Primitive: ρ, u, p.</p>
+                    <h3>Two-phase 5-equation model</h3>
+                    <p>Partial densities (α₁ρ₁, α₂ρ₂), mixture momentum (ρu), mixture energy (E), volume fraction (α₁). Non-conservative upwind advection for α.</p>
+                    <h3>Key components</h3>
+                    <ul>
+                        <li><strong>Flux:</strong> AUSM+UP (Liou 2006) — Mach and pressure splitting</li>
+                        <li><strong>EOS:</strong> Stiffened gas — ideal gas (p_∞=0) or water (γ≈7.1, p_∞≈3×10⁸)</li>
+                        <li><strong>Reconstruction:</strong> Optional MUSCL + Barth-Jespersen limiter (2nd order)</li>
+                    </ul>
+                    <p>See <a href="../unit_tests/sod_shock_tube_1d.html">sod_shock_tube_1d</a> for validation.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../search.js"></script>
+</body>
+</html>
