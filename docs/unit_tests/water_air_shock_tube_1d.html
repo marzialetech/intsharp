@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>water_air_shock_tube_1d - intsharp</title>
+    <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <div class="app">
+        <nav class="sidebar">
+            <div class="sidebar-header"><h1>intsharp</h1><span class="version">v1.0</span></div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search..." autocomplete="off"></div>
+            <ul class="nav-list" id="nav-list">
+                <li><a href="../index.html" data-page="home">Home</a></li>
+                <li><a href="../install.html" data-page="install">Installation</a></li>
+                <li><a href="../guide.html" data-page="guide">Running Simulations</a></li>
+                <li><a href="../components.html" data-page="components">Components</a></li>
+                <li><a href="../unit-tests.html" class="active" data-page="unit-tests">Unit Tests</a></li>
+            </ul>
+            <div class="sidebar-footer"><a href="https://github.com/marzialetech/intsharp" target="_blank">GitHub</a></div>
+        </nav>
+        <main class="content">
+            <div class="window">
+                <div class="window-header"><span class="window-title">water_air_shock_tube_1d</span></div>
+                <div class="window-body">
+                    <p><a href="../unit-tests.html">&larr; Unit Tests</a></p>
+                    <h2>Description</h2>
+                    <p>Two-phase water-air shock tube using the 5-equation model. Wood's formula for mixture sound speed, AUSM+UP flux with v_riem, corrective α term, post-step normalization. At t=2.4×10⁻⁴ s: water (ρ=1000, p=10⁹) left, air (ρ=10, p=10⁵) right.</p>
+                    <h3>How to run</h3>
+                    <pre><code>python run.py unit_tests/water_air_shock_tube_1d.yaml</code></pre>
+                    <h3>Config summary</h3>
+                    <ul>
+                        <li><strong>Domain:</strong> x ∈ [0, 1], 500 points</li>
+                        <li><strong>Time:</strong> dt = 2×10⁻⁸, 12000 steps (t_final = 2.4×10⁻⁴ s)</li>
+                        <li><strong>Physics:</strong> euler mode, two_phase_model: 5eq</li>
+                        <li><strong>Phase 1 (water):</strong> γ=4.4, p_∞=6×10⁸</li>
+                        <li><strong>Phase 2 (air):</strong> γ=1.4, p_∞=0</li>
+                        <li><strong>IC:</strong> Riemann at x=0.75 — Left: water (ρ=1000, α=1); Right: air (ρ=10, α=0)</li>
+                        <li><strong>Monitors:</strong> console, gif (rho, u, p, alpha), txt</li>
+                    </ul>
+                    <h3>Output</h3>
+                    <p>Animated GIFs for density, velocity, pressure, and volume fraction.</p>
+                    <p><strong>Density (ρ)</strong></p>
+                    <p><img src="water_air_shock_tube_1d/rho.gif" alt="rho.gif" class="unit-test-output" style="max-width:100%; height:auto;"></p>
+                    <p><strong>Velocity (u)</strong></p>
+                    <p><img src="water_air_shock_tube_1d/u.gif" alt="u.gif" class="unit-test-output" style="max-width:100%; height:auto;"></p>
+                    <p><strong>Pressure (p)</strong></p>
+                    <p><img src="water_air_shock_tube_1d/p.gif" alt="p.gif" class="unit-test-output" style="max-width:100%; height:auto;"></p>
+                    <p><strong>Volume fraction (α)</strong></p>
+                    <p><img src="water_air_shock_tube_1d/alpha.gif" alt="alpha.gif" class="unit-test-output" style="max-width:100%; height:auto;"></p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../search.js"></script>
+</body>
+</html>

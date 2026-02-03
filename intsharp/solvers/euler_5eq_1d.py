@@ -27,8 +27,8 @@ from typing import Literal
 import numpy as np
 from numpy.typing import NDArray
 
-from ..eos import sound_speed
-from ..flux_ausm import ausm_plus_up_flux_1d, compute_interface_states_1d
+from ..eos import sound_speed, mixture_sound_speed_wood
+from ..flux_ausm import ausm_plus_up_flux_1d_with_v_riem
 from ..limiters import muscl_reconstruct_1d
 
 
@@ -112,13 +112,19 @@ class FiveEqState1D:
     @property
     def c(self) -> NDArray[np.float64]:
         """
-        Mixture sound speed (Wood's formula approximation).
+        Mixture sound speed via Wood's formula.
         
-        For simplicity, use volume-weighted effective gamma.
+        1/(ρ_mix c_mix²) = α₁/(ρ₁ c₁²) + α₂/(ρ₂ c₂²)
         """
-        gamma_eff = self.alpha1 * self.gamma1 + self.alpha2 * self.gamma2
-        p_inf_eff = self.alpha1 * self.p_inf1 + self.alpha2 * self.p_inf2
-        return sound_speed(self.rho, self.p, gamma_eff, p_inf_eff)
+        rho1 = np.maximum(self.rho1, 1e-10)
+        rho2 = np.maximum(self.rho2, 1e-10)
+        p = self.p
+        c1 = sound_speed(rho1, p, self.gamma1, self.p_inf1)
+        c2 = sound_speed(rho2, p, self.gamma2, self.p_inf2)
+        c_mix = mixture_sound_speed_wood(
+            self.rho, self.alpha1, rho1, rho2, c1, c2
+        )
+        return np.maximum(np.minimum(c_mix, 1e10), 1e-10)
     
     def copy(self) -> "FiveEqState1D":
         """Create a copy of the state."""
@@ -268,7 +274,6 @@ def euler_step_5eq_1d(
         u_L, u_R = muscl_reconstruct_1d(u_ext)
         p_L, p_R = muscl_reconstruct_1d(p_ext)
         E_L, E_R = muscl_reconstruct_1d(E_ext)
-        c_L, c_R = muscl_reconstruct_1d(c_ext)
         alpha1_rho1_L, alpha1_rho1_R = muscl_reconstruct_1d(alpha1_rho1_ext)
         alpha2_rho2_L, alpha2_rho2_R = muscl_reconstruct_1d(alpha2_rho2_ext)
         alpha1_L, alpha1_R = muscl_reconstruct_1d(alpha1_ext)
@@ -278,8 +283,6 @@ def euler_step_5eq_1d(
         rho_R = np.maximum(rho_R, 1e-10)
         p_L = np.maximum(p_L, 1e-10)
         p_R = np.maximum(p_R, 1e-10)
-        c_L = np.maximum(c_L, 1e-10)
-        c_R = np.maximum(c_R, 1e-10)
         alpha1_rho1_L = np.maximum(alpha1_rho1_L, 0.0)
         alpha1_rho1_R = np.maximum(alpha1_rho1_R, 0.0)
         alpha2_rho2_L = np.maximum(alpha2_rho2_L, 0.0)
@@ -292,29 +295,42 @@ def euler_step_5eq_1d(
         u_L, u_R = u_ext[:-1], u_ext[1:]
         p_L, p_R = p_ext[:-1], p_ext[1:]
         E_L, E_R = E_ext[:-1], E_ext[1:]
-        c_L, c_R = c_ext[:-1], c_ext[1:]
         alpha1_rho1_L, alpha1_rho1_R = alpha1_rho1_ext[:-1], alpha1_rho1_ext[1:]
         alpha2_rho2_L, alpha2_rho2_R = alpha2_rho2_ext[:-1], alpha2_rho2_ext[1:]
         alpha1_L, alpha1_R = alpha1_ext[:-1], alpha1_ext[1:]
     
-    # Compute AUSM+UP fluxes for mixture (ρ, ρu, E)
-    F_rho, F_rho_u, F_E = ausm_plus_up_flux_1d(
+    # Interface sound speed via Wood's formula (phase-specific c1, c2)
+    alpha2_L = 1.0 - alpha1_L
+    alpha2_R = 1.0 - alpha1_R
+    rho1_L = np.maximum(alpha1_rho1_L / (alpha1_L + 1e-30), 1e-10)
+    rho2_L = np.maximum(alpha2_rho2_L / (alpha2_L + 1e-30), 1e-10)
+    rho1_R = np.maximum(alpha1_rho1_R / (alpha1_R + 1e-30), 1e-10)
+    rho2_R = np.maximum(alpha2_rho2_R / (alpha2_R + 1e-30), 1e-10)
+    c1_L = sound_speed(rho1_L, p_L, gamma1, p_inf1)
+    c2_L = sound_speed(rho2_L, p_L, gamma2, p_inf2)
+    c1_R = sound_speed(rho1_R, p_R, gamma1, p_inf1)
+    c2_R = sound_speed(rho2_R, p_R, gamma2, p_inf2)
+    c_L = mixture_sound_speed_wood(rho_L, alpha1_L, rho1_L, rho2_L, c1_L, c2_L)
+    c_R = mixture_sound_speed_wood(rho_R, alpha1_R, rho1_R, rho2_R, c1_R, c2_R)
+    c_L = np.maximum(np.minimum(c_L, 1e10), 1e-10)
+    c_R = np.maximum(np.minimum(c_R, 1e10), 1e-10)
+    
+    # Compute AUSM+UP fluxes for mixture (ρ, ρu, E) with v_riem for flux vector splitting
+    F_rho, F_rho_u, F_E, v_riem = ausm_plus_up_flux_1d_with_v_riem(
         rho_L, u_L, p_L, E_L, c_L,
         rho_R, u_R, p_R, E_R, c_R,
     )
     
-    # Compute fluxes for partial densities (α₁ρ₁ and α₂ρ₂)
-    # These are advected with velocity u: F = (αᵢρᵢ)·u
-    # Use upwind based on interface velocity
-    u_face = 0.5 * (u_L + u_R)
+    # Flux vector splitting with ℓ± and v_riem: use v_riem = m_dot/ρ for convective fluxes
+    # Partial density fluxes: F_{αᵢρᵢ} = (αᵢρᵢ)_upwind * v_riem (ensures F_α₁ρ₁+F_α₂ρ₂=F_ρ)
+    alpha1_rho1_upwind = np.where(v_riem >= 0, alpha1_rho1_L, alpha1_rho1_R)
+    alpha2_rho2_upwind = np.where(v_riem >= 0, alpha2_rho2_L, alpha2_rho2_R)
     
-    F_alpha1_rho1 = np.where(u_face >= 0, 
-                             alpha1_rho1_L * u_L,
-                             alpha1_rho1_R * u_R)
+    F_alpha1_rho1 = alpha1_rho1_upwind * v_riem
+    F_alpha2_rho2 = alpha2_rho2_upwind * v_riem
     
-    F_alpha2_rho2 = np.where(u_face >= 0,
-                             alpha2_rho2_L * u_L,
-                             alpha2_rho2_R * u_R)
+    # Corrective vector for α_k: dissipative term ∝ (u_L - u_R) at interface for stability
+    # Added to the α flux in the non-conservative equation (see alpha1 update below)
     
     # Update conserved variables
     alpha1_rho1_new = alpha1_rho1 - dt / dx * (F_alpha1_rho1[1:n+1] - F_alpha1_rho1[0:n])
@@ -322,44 +338,33 @@ def euler_step_5eq_1d(
     rho_u_new = rho_u - dt / dx * (F_rho_u[1:n+1] - F_rho_u[0:n])
     E_new = E - dt / dx * (F_E[1:n+1] - F_E[0:n])
     
-    # Advect alpha1 non-conservatively: ∂α₁/∂t + u·∂α₁/∂x = 0
-    # For non-conservative transport, we use: α_new = α - dt × u × (∂α/∂x)
-    # Use upwind for the gradient
-    # Cell-centered velocity
-    u_cell = rho_u / (rho + 1e-30)
+    # Advect alpha1 non-conservatively: ∂α₁/∂t + v_riem·∂α₁/∂x = 0
+    # Use v_riem (interface velocity) for flux vector splitting
+    alpha1_upwind = np.where(v_riem >= 0, alpha1_L, alpha1_R)
+    F_alpha1 = alpha1_upwind * v_riem
     
-    # Alpha gradient using upwind (based on local velocity)
-    # For interface i+1/2, if u > 0: grad uses (α_i - α_{i-1}), else (α_{i+1} - α_i)
-    # But we need cell-centered update, so use face values
-    alpha1_L_face = alpha1_L  # Alpha at left of each interface
-    alpha1_R_face = alpha1_R  # Alpha at right of each interface
+    # Corrective vector for α_k: dissipative term ∝ (u_L - u_R) for stability at interfaces
+    # Proportional to relative velocity (volume fraction coupling from enhanced AUSM+-up)
+    K_alpha = 0.1
+    alpha_bar = 0.5 * (alpha1_L + alpha1_R)
+    correction_alpha = K_alpha * (u_L - u_R) * alpha_bar * (1.0 - alpha_bar)
+    F_alpha1 = F_alpha1 + correction_alpha
     
-    # Non-conservative: ∂α/∂t + u·∂α/∂x = 0
-    # Discretize as: (α_new - α) / dt + u * (α_{i+1/2} - α_{i-1/2}) / dx = 0
-    # Use upwind for face values
-    u_face = 0.5 * (u_L + u_R)
-    alpha1_face = np.where(u_face >= 0, alpha1_L_face, alpha1_R_face)
+    alpha1_new = alpha1 - dt / dx * (F_alpha1[1:n+1] - F_alpha1[0:n])
     
-    # Gradient term: (α_{i+1/2} - α_{i-1/2}) / dx, multiplied by cell velocity
-    # This is still not quite right for non-conservative form
-    # Better approach: use cell velocity and upwind gradient
-    alpha1_ext_interior = alpha1_ext[1:-1]  # Interior cells
-    alpha1_left = alpha1_ext[:-2]   # Left neighbors
-    alpha1_right = alpha1_ext[2:]   # Right neighbors
-    
-    # Upwind gradient based on cell velocity
-    grad_alpha1 = np.where(
-        u_cell >= 0,
-        (alpha1_ext_interior - alpha1_left) / dx,
-        (alpha1_right - alpha1_ext_interior) / dx
+    # Post-step α_k normalization: ensure consistency with partial densities
+    # α₁ = (α₁ρ₁) / ρ_mix (redefine from conserved variables for robustness)
+    rho_new = alpha1_rho1_new + alpha2_rho2_new
+    alpha1_new = np.where(
+        rho_new > 1e-30,
+        alpha1_rho1_new / rho_new,
+        alpha1_new
     )
     
-    alpha1_new = alpha1 - dt * u_cell * grad_alpha1
-    
-    # Clamp values
+    # Clamp and ensure α₁ + α₂ = 1
     alpha1_rho1_new = np.maximum(alpha1_rho1_new, 0.0)
     alpha2_rho2_new = np.maximum(alpha2_rho2_new, 0.0)
-    alpha1_new = np.clip(alpha1_new, 1e-10, 1.0 - 1e-10)  # Avoid exact 0 or 1
+    alpha1_new = np.clip(alpha1_new, 1e-10, 1.0 - 1e-10)
     
     # Check for negative pressure
     p_new = compute_pressure_5eq(

@@ -31,7 +31,7 @@
                     <p>1D compressible Euler (single-phase and two-phase) with AUSM+UP flux, stiffened-gas EOS, optional MUSCL/Barth-Jespersen reconstruction.</p>
                     <ul>
                         <li><a href="unit_tests/sod_shock_tube_1d.html">sod_shock_tube_1d</a> — 1D Sod shock tube: ideal gas Riemann problem, t=0.2, rarefaction/contact/shock (has regression test)</li>
-                        <li><code>unit_tests/water_air_shock_tube_1d.yaml</code> — Two-phase water-air 5-equation model (experimental)</li>
+                        <li><a href="unit_tests/water_air_shock_tube_1d.html">water_air_shock_tube_1d</a> — Two-phase water-air 5-equation model, Wood's formula, v_riem flux splitting (has regression test)</li>
                     </ul>
 
                     <h2>Comparison Tests</h2>
@@ -50,12 +50,13 @@
                     <h3>Running the tests</h3>
                     <pre><code># From the repo root:
 python run.py unit_tests/sod_shock_tube_1d.yaml
+python run.py unit_tests/water_air_shock_tube_1d.yaml
 python run.py unit_tests/tanh_hat_10_rev_compare.yaml
 python run.py unit_tests/tanh_circle_10_rev_compare.yaml
 python run.py unit_tests/intsharplogo_1_rev.yaml</code></pre>
-                    <h3>Regression test (pytest)</h3>
-                    <p>The Sod shock tube has a regression test that verifies output matches the reference snapshot:</p>
-                    <pre><code>pytest tests/test_sod_shock_tube.py -v</code></pre>
+                    <h3>Regression tests (pytest)</h3>
+                    <p>Euler tests verify output matches reference snapshots:</p>
+                    <pre><code>pytest tests/test_sod_shock_tube.py tests/test_water_air_shock_tube.py -v</code></pre>
                 </div>
             </div>
         </main>

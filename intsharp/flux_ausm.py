@@ -214,6 +214,57 @@ def ausm_plus_up_flux_1d(
     return F_rho, F_rho_u, F_E
 
 
+def ausm_plus_up_flux_1d_with_v_riem(
+    rho_L: NDArray[np.float64],
+    u_L: NDArray[np.float64],
+    p_L: NDArray[np.float64],
+    E_L: NDArray[np.float64],
+    c_L: NDArray[np.float64],
+    rho_R: NDArray[np.float64],
+    u_R: NDArray[np.float64],
+    p_R: NDArray[np.float64],
+    E_R: NDArray[np.float64],
+    c_R: NDArray[np.float64],
+    Kp: float = 0.25,
+    Ku: float = 0.75,
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+    """
+    AUSM+UP flux with interface velocity v_riem for two-phase flux vector splitting.
+    
+    v_riem = m_dot / rho_upwind (interface velocity from mass flux, ensures F_α₁ρ₁+F_α₂ρ₂=F_ρ)
+    
+    Returns (F_rho, F_rho_u, F_E, v_riem).
+    """
+    rho_avg = 0.5 * (rho_L + rho_R)
+    a_half = 0.5 * (c_L + c_R)
+    M_L = u_L / (a_half + 1e-30)
+    M_R = u_R / (a_half + 1e-30)
+    M_plus = _mach_plus_4(M_L)
+    M_minus = _mach_minus_4(M_R)
+    M_bar_sq = np.minimum(0.5 * (M_L ** 2 + M_R ** 2), 1.0)
+    p_diff = (p_R - p_L) / (rho_avg * a_half ** 2 + 1e-30)
+    M_p = -Kp * np.maximum(1.0 - M_bar_sq, 0.0) * p_diff
+    M_half = M_plus + M_minus + M_p
+    rho_upwind = np.where(M_half >= 0, rho_L, rho_R)
+    m_dot = a_half * M_half * rho_upwind
+    v_riem = m_dot / (rho_upwind + 1e-30)
+    
+    P_plus = _pressure_plus_5(M_L)
+    P_minus = _pressure_minus_5(M_R)
+    p_u = -Ku * P_plus * P_minus * 2.0 * rho_avg * a_half * (u_R - u_L)
+    p_half = P_plus * p_L + P_minus * p_R + p_u
+    
+    u_upwind = np.where(M_half >= 0, u_L, u_R)
+    H_L = enthalpy(rho_L, p_L, E_L)
+    H_R = enthalpy(rho_R, p_R, E_R)
+    H_upwind = np.where(M_half >= 0, H_L, H_R)
+    
+    F_rho = m_dot
+    F_rho_u = m_dot * u_upwind + p_half
+    F_E = m_dot * H_upwind
+    return F_rho, F_rho_u, F_E, v_riem
+
+
 def compute_interface_states_1d(
     rho: NDArray[np.float64],
     u: NDArray[np.float64],

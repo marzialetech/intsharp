@@ -408,14 +408,24 @@ def mixture_sound_speed_wood(
     NDArray
         Mixture sound speed.
     """
-    # Avoid division by zero
-    c1_sq = np.maximum(c1 * c1, 1e-30)
-    c2_sq = np.maximum(c2 * c2, 1e-30)
+    # Avoid division by zero; handle pure phases (alpha=0 or 1)
+    rho1_safe = np.maximum(np.asarray(rho1, dtype=np.float64), 1e-30)
+    rho2_safe = np.maximum(np.asarray(rho2, dtype=np.float64), 1e-30)
+    c1_sq = np.maximum(np.asarray(c1, dtype=np.float64) ** 2, 1e-30)
+    c2_sq = np.maximum(np.asarray(c2, dtype=np.float64) ** 2, 1e-30)
 
-    inv_rho_c2 = alpha / (rho1 * c1_sq) + (1.0 - alpha) / (rho2 * c2_sq)
-    c_mix_sq = 1.0 / (rho_mix * inv_rho_c2 + 1e-30)
+    # Pure phase 1: c_mix = c1; pure phase 2: c_mix = c2
+    alpha_arr = np.asarray(alpha, dtype=np.float64)
+    inv_rho_c2 = alpha_arr / (rho1_safe * c1_sq) + (1.0 - alpha_arr) / (rho2_safe * c2_sq)
+    c_mix_sq = 1.0 / (np.asarray(rho_mix, dtype=np.float64) * inv_rho_c2 + 1e-30)
+    c_mix = np.sqrt(np.maximum(c_mix_sq, 1e-30))
 
-    return np.sqrt(np.maximum(c_mix_sq, 1e-30))
+    # Override for pure phases to avoid 0/0 or inf
+    c1_val = np.sqrt(c1_sq)
+    c2_val = np.sqrt(c2_sq)
+    c_mix = np.where(alpha_arr >= 1.0 - 1e-10, c1_val, c_mix)
+    c_mix = np.where(alpha_arr <= 1e-10, c2_val, c_mix)
+    return c_mix
 
 
 def phase_densities_from_pressure(
