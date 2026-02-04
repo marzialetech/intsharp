@@ -12,3 +12,6 @@ __pycache__/
 
 # Optional: uncomment to ignore timestamped run outputs under unit_tests
 # unit_tests/*_*/
+
+# Draft / unpublished unit tests (move to unit_tests/ when ready)
+drafts/
