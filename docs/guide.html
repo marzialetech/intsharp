@@ -205,7 +205,8 @@ solver:
                     <h3>Timestepper</h3>
                     <pre><code>timestepper:
   type: euler     # or rk4</code></pre>
-                    <p>For DG Euler, use <code>rk4</code> or the DG-recommended SSP-RK3 option when provided by the unit-test configuration.</p>
+                    <p>For Euler mode with <code>euler_spatial_discretization: fv</code>, this controls time integration directly.</p>
+                    <p>For Euler mode with <code>euler_spatial_discretization: dg</code>, the current solver uses an internal SSP-RK3 update in <code>intsharp/solvers/euler_dg_1d.py</code> (the YAML timestepper is not used for DG at present).</p>
 
                     <h3 id="sharpening">Sharpening (Optional)</h3>
                     <pre><code>sharpening:

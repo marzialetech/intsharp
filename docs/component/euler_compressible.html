@@ -247,11 +247,12 @@ q_{R,i+1/2} = q_{i+1} - \tfrac{1}{2}\,\phi_{i+1}\,\Delta q_{i+1}
                     <p><strong>Positivity enforced</strong> for \(\rho\), \(p\), \(c\). First-order: \(q_L = q_i\), \(q_R = q_{i+1}\).</p>
 
                     <h2 id="time-integration">Time Integration</h2>
-                    <p>Forward Euler (explicit):</p>
+                    <p><strong>FV path:</strong> uses configured timestepper (<code>euler</code> or <code>rk4</code>) with explicit conservative update, e.g. Forward Euler:</p>
                     <div class="math-block">\[
 \mathbf{U}_i^{n+1} = \mathbf{U}_i^n - \frac{\Delta t}{\Delta x}\bigl(\mathbf{F}_{i+1/2} - \mathbf{F}_{i-1/2}\bigr)
 \]</div>
-                    <p><strong>CFL condition:</strong> \(\text{CFL} = \max(|u| + c)\,\Delta t/\Delta x < 1\).</p>
+                    <p><strong>DG path:</strong> uses an internal SSP-RK3 integrator in <code>euler_dg_1d.py</code> (see <a href="ssp_rk3.html">ssp_rk3</a>).</p>
+                    <p><strong>CFL condition:</strong> \(\text{CFL} = \max(|u| + c)\,\Delta t/\Delta x < 1\) (DG typically requires tighter effective limits with increasing order).</p>
 
                     <h2 id="boundary-conditions">Boundary Conditions</h2>
                     <ul>
