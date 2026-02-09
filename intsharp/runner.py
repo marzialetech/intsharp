@@ -907,7 +907,7 @@ def run_convergence_study(
             f.write("Observed order from log(error)=p*log(dx)+c (excluding zero error points)\n")
             for method in methods:
                 p = observed_orders[method]
-                f.write(f"{method}: p={p:.6f}\n")
+                f.write(f"{method}: order={p:.6f}\n")
 
         # Persist per-case profiles so reference changes can be re-postprocessed
         profiles_dir = output_dir / "convergence_profiles"
@@ -938,7 +938,7 @@ def run_convergence_study(
             dx_plot = [r[1] for r in method_rows]
             err_plot = [r[2] for r in method_rows]
             p = observed_orders[method]
-            label = f"{method} (p={p:.3f})" if np.isfinite(p) else method
+            label = f"{method} (order={p:.3f})" if np.isfinite(p) else method
             plt.loglog(dx_plot, err_plot, marker="o", linewidth=1.5, label=label)
 
         plt.xlabel("Grid spacing dx")
