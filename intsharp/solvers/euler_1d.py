@@ -1,5 +1,5 @@
 """
-1D Compressible Euler solver using AUSM+UP flux.
+1D compressible Euler solver with modular intercell fluxes.
 
 Solves the 1D Euler equations:
     ∂ρ/∂t + ∂(ρu)/∂x = 0
@@ -30,6 +30,7 @@ from ..eos import (
     mixture_sound_speed_wood,
 )
 from ..flux_ausm import ausm_plus_up_flux_1d, compute_interface_states_1d
+from ..flux_hllc import hllc_flux_1d
 
 
 @dataclass
@@ -157,17 +158,45 @@ def apply_bc_euler_1d(
         raise ValueError(f"Unknown BC type: {bc_type}")
 
 
+def _compute_euler_flux_1d(
+    rho_L: NDArray[np.float64],
+    u_L: NDArray[np.float64],
+    p_L: NDArray[np.float64],
+    E_L: NDArray[np.float64],
+    c_L: NDArray[np.float64],
+    rho_R: NDArray[np.float64],
+    u_R: NDArray[np.float64],
+    p_R: NDArray[np.float64],
+    E_R: NDArray[np.float64],
+    c_R: NDArray[np.float64],
+    flux_calculator: Literal["ausm_plus_up", "hllc"],
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+    """Dispatch Euler flux computation to the selected calculator."""
+    if flux_calculator == "ausm_plus_up":
+        return ausm_plus_up_flux_1d(
+            rho_L, u_L, p_L, E_L, c_L,
+            rho_R, u_R, p_R, E_R, c_R,
+        )
+    if flux_calculator == "hllc":
+        return hllc_flux_1d(
+            rho_L, u_L, p_L, E_L, c_L,
+            rho_R, u_R, p_R, E_R, c_R,
+        )
+    raise ValueError(f"Unknown flux calculator: {flux_calculator}")
+
+
 def euler_step_1d(
     state: EulerState1D,
     dx: float,
     dt: float,
     bc_type: Literal["transmissive", "reflective", "periodic"] = "transmissive",
     use_muscl: bool = True,
+    flux_calculator: Literal["ausm_plus_up", "hllc"] = "ausm_plus_up",
 ) -> EulerState1D:
     """
     Perform one explicit Euler time step for 1D compressible flow.
 
-    Uses AUSM+UP flux and forward Euler time integration.
+    Uses selected intercell flux and forward Euler time integration.
 
     Parameters
     ----------
@@ -181,6 +210,8 @@ def euler_step_1d(
         Boundary condition type.
     use_muscl : bool
         If True, use MUSCL reconstruction with Barth-Jespersen limiter.
+    flux_calculator : {"ausm_plus_up", "hllc"}
+        Intercell flux calculator.
 
     Returns
     -------
@@ -223,10 +254,11 @@ def euler_step_1d(
         rho_ext, u_ext, p_ext, E_ext, c_ext, use_muscl=use_muscl
     )
 
-    # Compute AUSM+UP fluxes at all interfaces
-    F_rho, F_rho_u, F_E = ausm_plus_up_flux_1d(
+    # Compute interface fluxes at all interfaces
+    F_rho, F_rho_u, F_E = _compute_euler_flux_1d(
         rho_L, u_L, p_L, E_L, c_L,
         rho_R, u_R, p_R, E_R, c_R,
+        flux_calculator=flux_calculator,
     )
 
     # F has n+1 elements (interfaces between ghost and interior cells)
@@ -468,11 +500,12 @@ def euler_step_two_phase_1d(
     dt: float,
     bc_type: Literal["transmissive", "reflective", "periodic"] = "transmissive",
     use_muscl: bool = True,
+    flux_calculator: Literal["ausm_plus_up", "hllc"] = "ausm_plus_up",
 ) -> TwoPhaseEulerState1D:
     """
     Perform one explicit Euler time step for 1D two-phase flow.
 
-    Uses AUSM+UP flux with effective mixture properties.
+    Uses selected intercell flux with effective mixture properties.
     Alpha is advected with the flow velocity (non-conservative transport).
     
     Parameters
@@ -539,10 +572,11 @@ def euler_step_two_phase_1d(
         rho_ext, u_ext, p_ext, E_ext, c_ext, use_muscl=use_muscl
     )
 
-    # Compute AUSM+UP fluxes
-    F_rho, F_rho_u, F_E = ausm_plus_up_flux_1d(
+    # Compute interface fluxes
+    F_rho, F_rho_u, F_E = _compute_euler_flux_1d(
         rho_L, u_L, p_L, E_L, c_L,
         rho_R, u_R, p_R, E_R, c_R,
+        flux_calculator=flux_calculator,
     )
 
     # Update conserved variables

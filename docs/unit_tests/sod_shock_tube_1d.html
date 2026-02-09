@@ -27,16 +27,17 @@
                 <div class="window-body">
                     <p><a href="../unit-tests.html">&larr; Unit Tests</a></p>
                     <h2>Description</h2>
-                    <p>Classic 1D Sod shock tube (Riemann problem) for validating the compressible Euler solver. Single-phase ideal gas (γ=1.4). At t=0.2: left-moving rarefaction, contact discontinuity, right-moving shock.</p>
+                    <p>Classic 1D Sod shock tube (Riemann problem) for validating compressible Euler solvers. Single-phase ideal gas (γ=1.4). At t=0.2: left-moving rarefaction, contact discontinuity, right-moving shock. This test now includes FV and DG (P1/P2/P3) comparisons and analytical-reference convergence outputs.</p>
                     <h3>How to run</h3>
-                    <pre><code>python run.py unit_tests/sod_shock_tube_1d.yaml</code></pre>
+                    <pre><code>python run.py unit_tests/sod_shock_tube_1d.yaml
+python run.py unit_tests/sod_shock_tube_convergence_1d.yaml</code></pre>
                     <h3>Config summary</h3>
                     <ul>
                         <li><strong>Domain:</strong> x ∈ [0, 1], 400 points</li>
                         <li><strong>Time:</strong> dt = 0.0001, 2000 steps (t_final = 0.2)</li>
-                        <li><strong>Physics:</strong> euler mode, ideal gas (γ=1.4, p_∞=0)</li>
+                        <li><strong>Physics:</strong> euler mode, ideal gas (γ=1.4, p_∞=0); FV and DG discretizations available</li>
                         <li><strong>IC:</strong> Riemann at x=0.5 — Left: ρ=1, u=0, p=1; Right: ρ=0.125, u=0, p=0.1</li>
-                        <li><strong>BC:</strong> transmissive; <strong>Reconstruction:</strong> first-order (use_muscl: false)</li>
+                        <li><strong>BC:</strong> transmissive; <strong>Reconstruction:</strong> first-order (use_muscl: false) for FV baseline</li>
                         <li><strong>Monitors:</strong> console, gif (rho, u, p, E, e_int), txt</li>
                     </ul>
                     <h3>Output</h3>
@@ -51,6 +52,11 @@
                     <p><img src="sod_shock_tube_1d/E.gif" alt="E.gif" class="unit-test-output" style="max-width:100%; height:auto;"></p>
                     <p><strong>Specific internal energy (e_int)</strong></p>
                     <p><img src="sod_shock_tube_1d/e_int.gif" alt="e_int.gif" class="unit-test-output" style="max-width:100%; height:auto;"></p>
+                    <h3>New FV/DG Figure Set</h3>
+                    <p><strong>Method-by-resolution comparison with analytical Sod density</strong></p>
+                    <p><img src="sod_shock_tube_1d/sod_method_grid_coarse_vs_fine_with_analytic.png" alt="Sod FV/DG coarse-fine analytical comparison" class="unit-test-output" style="max-width:100%; height:auto;"></p>
+                    <p><strong>L1 convergence in density vs analytical Sod reference</strong></p>
+                    <p><img src="sod_shock_tube_1d/convergence_rho_l1.png" alt="Sod L1 convergence vs analytical reference" class="unit-test-output" style="max-width:100%; height:auto;"></p>
                 </div>
             </div>
         </main>

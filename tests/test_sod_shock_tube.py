@@ -65,3 +65,27 @@ def test_sod_shock_tube_matches_reference():
                 rtol=1e-14, atol=1e-14,
                 err_msg=f"Field {key} differs from reference"
             )
+
+
+@pytest.mark.parametrize("dg_order", [1, 2, 3])
+def test_sod_shock_tube_dg_runs(dg_order: int):
+    """Run Sod shock tube with DG spatial discretization and check admissibility."""
+    from intsharp.config import load_config
+    from intsharp.runner import run_simulation
+
+    config = load_config(CONFIG_PATH)
+    config.physics.euler_spatial_discretization = "dg"
+    config.physics.dg_order = dg_order
+    config.output.monitors = []
+    config.time.n_steps = 600
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config.output.directory = tmpdir
+        fields = run_simulation(config)
+
+    rho = fields["rho"].values
+    p = fields["p"].values
+    assert np.all(np.isfinite(rho))
+    assert np.all(np.isfinite(p))
+    assert np.all(rho > 0.0)
+    assert np.all(p > 0.0)

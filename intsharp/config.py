@@ -300,6 +300,26 @@ class PhysicsConfig(BaseModel):
     use_muscl: bool = Field(
         True, description="Use MUSCL reconstruction with Barth-Jespersen limiter (2nd order)"
     )
+    # Spatial discretization for Euler mode
+    euler_spatial_discretization: Literal["fv", "dg"] = Field(
+        "fv",
+        description="Euler spatial discretization: finite volume ('fv') or discontinuous Galerkin ('dg')."
+    )
+    # DG options (currently only P1 implemented)
+    dg_order: int = Field(
+        1, ge=1, le=3, description="DG polynomial order (supported: 1, 2, 3)."
+    )
+    dg_use_limiter: bool = Field(
+        True, description="Enable DG slope limiter."
+    )
+    dg_use_positivity: bool = Field(
+        True, description="Enable DG positivity scaling."
+    )
+    # Euler intercell flux calculator
+    flux_calculator: Literal["ausm_plus_up", "hllc"] = Field(
+        "ausm_plus_up",
+        description="Intercell Riemann flux calculator for Euler mode."
+    )
     # Two-phase model selection
     two_phase_model: Literal["mixture", "5eq"] = Field(
         "5eq",
@@ -328,6 +348,10 @@ class PhysicsConfig(BaseModel):
                 )
             if self.euler_initial_conditions is None:
                 raise ValueError("Euler mode requires 'physics.euler_initial_conditions'")
+            if self.euler_spatial_discretization == "dg" and self.is_two_phase:
+                raise ValueError(
+                    "DG Euler is currently implemented for single-phase mode only."
+                )
         return self
 
 
@@ -471,6 +495,36 @@ class OutputConfig(BaseModel):
     )
 
 
+class ConvergenceConfig(BaseModel):
+    """Optional spatial-convergence study configuration."""
+    enabled: bool = Field(False, description="Enable convergence study mode")
+    variable: Literal["rho"] = Field("rho", description="Field used for error computation")
+    norm: Literal["linf"] = Field("linf", description="Error norm (currently only linf)")
+    reference: Literal["finest", "analytical_sod"] = Field(
+        "finest", description="Reference solution type"
+    )
+    n_cases: int = Field(5, ge=2, description="Number of grid resolutions")
+    n_min: int = Field(50, ge=3, description="Minimum number of cells")
+    n_max: int = Field(400, ge=4, description="Maximum number of cells")
+    spacing: Literal["log10", "linear"] = Field(
+        "log10", description="Spacing for resolution sweep"
+    )
+    euler_methods: list[Literal["fv", "dg_p1", "dg_p2", "dg_p3"]] = Field(
+        default_factory=lambda: ["fv", "dg_p1", "dg_p2", "dg_p3"],
+        description="Euler methods to compare"
+    )
+    save_plot: bool = Field(True, description="Save log-log convergence plot")
+    save_table: bool = Field(True, description="Save TSV table with errors")
+
+    @model_validator(mode="after")
+    def validate_bounds(self) -> "ConvergenceConfig":
+        if self.n_max <= self.n_min:
+            raise ValueError("convergence.n_max must be > convergence.n_min")
+        if len(self.euler_methods) == 0:
+            raise ValueError("convergence.euler_methods cannot be empty")
+        return self
+
+
 # ---------------------------------------------------------------------------
 # Main configuration
 # ---------------------------------------------------------------------------
@@ -497,6 +551,7 @@ class SimulationConfig(BaseModel):
     timestepper: TimeStepperConfig = Field(default_factory=TimeStepperConfig)
     sharpening: Optional[SharpeningConfig] = Field(None)
     surface_tension: Optional[SurfaceTensionConfig] = Field(None)
+    convergence: Optional[ConvergenceConfig] = Field(None)
     output: OutputConfig = Field(default_factory=OutputConfig)
 
     @property
@@ -533,6 +588,8 @@ class SimulationConfig(BaseModel):
                     "Euler mode currently only supports 1D domains. "
                     "2D support coming soon."
                 )
+            if self.convergence and self.convergence.enabled and self.domain.ndim != 1:
+                raise ValueError("convergence mode currently supports only 1D")
         return self
 
     @model_validator(mode="after")

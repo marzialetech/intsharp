@@ -15,3 +15,6 @@ __pycache__/
 
 # Draft / unpublished unit tests (move to unit_tests/ when ready)
 drafts/
+
+# Local standalone postdoc abstract artifacts
+postdoc_abstract_fsi_dg_fv_mpm*

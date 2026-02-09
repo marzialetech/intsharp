@@ -1,0 +1,45 @@
+domain:
+  x_min: 0.0
+  x_max: 1.0
+  n_points: 400
+
+time:
+  dt: 0.0001
+  n_steps: 2000
+
+physics:
+  mode: euler
+  material:
+    gamma: 1.4
+    p_infinity: 0.0
+  euler_initial_conditions:
+    type: riemann
+    x_discontinuity: 0.5
+    left:
+      rho: 1.0
+      u: 0.0
+      p: 1.0
+    right:
+      rho: 0.125
+      u: 0.0
+      p: 0.1
+  euler_bc: transmissive
+  use_muscl: false
+
+convergence:
+  enabled: true
+  variable: rho
+  norm: linf
+  reference: analytical_sod
+  n_cases: 5
+  n_min: 50
+  n_max: 400
+  spacing: log10
+  euler_methods: [fv, dg_p1, dg_p2, dg_p3]
+  save_plot: true
+  save_table: true
+
+output:
+  directory: ./unit_tests/sod_shock_tube_convergence_1d
+  monitors:
+    - type: console

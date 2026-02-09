@@ -29,6 +29,7 @@ from numpy.typing import NDArray
 
 from ..eos import sound_speed, mixture_sound_speed_wood
 from ..flux_ausm import ausm_plus_up_flux_1d_with_v_riem
+from ..flux_hllc import hllc_flux_1d_with_v_riem
 from ..limiters import muscl_reconstruct_1d
 
 
@@ -215,11 +216,12 @@ def euler_step_5eq_1d(
     dt: float,
     bc_type: Literal["transmissive", "reflective", "periodic"] = "transmissive",
     use_muscl: bool = True,
+    flux_calculator: Literal["ausm_plus_up", "hllc"] = "ausm_plus_up",
 ) -> FiveEqState1D:
     """
     Perform one time step for 5-equation model.
     
-    Uses AUSM+UP flux for conservative equations.
+    Uses selected intercell flux for conservative equations.
     Alpha is advected non-conservatively.
     """
     n = len(state.alpha1_rho1)
@@ -315,11 +317,19 @@ def euler_step_5eq_1d(
     c_L = np.maximum(np.minimum(c_L, 1e10), 1e-10)
     c_R = np.maximum(np.minimum(c_R, 1e10), 1e-10)
     
-    # Compute AUSM+UP fluxes for mixture (ρ, ρu, E) with v_riem for flux vector splitting
-    F_rho, F_rho_u, F_E, v_riem = ausm_plus_up_flux_1d_with_v_riem(
-        rho_L, u_L, p_L, E_L, c_L,
-        rho_R, u_R, p_R, E_R, c_R,
-    )
+    # Compute interface fluxes for mixture (ρ, ρu, E) with v_riem for flux vector splitting
+    if flux_calculator == "ausm_plus_up":
+        F_rho, F_rho_u, F_E, v_riem = ausm_plus_up_flux_1d_with_v_riem(
+            rho_L, u_L, p_L, E_L, c_L,
+            rho_R, u_R, p_R, E_R, c_R,
+        )
+    elif flux_calculator == "hllc":
+        F_rho, F_rho_u, F_E, v_riem = hllc_flux_1d_with_v_riem(
+            rho_L, u_L, p_L, E_L, c_L,
+            rho_R, u_R, p_R, E_R, c_R,
+        )
+    else:
+        raise ValueError(f"Unknown flux calculator: {flux_calculator}")
     
     # Flux vector splitting with ℓ± and v_riem: use v_riem = m_dot/ρ for convective fluxes
     # Partial density fluxes: F_{αᵢρᵢ} = (αᵢρᵢ)_upwind * v_riem (ensures F_α₁ρ₁+F_α₂ρ₂=F_ρ)

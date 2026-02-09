@@ -65,3 +65,28 @@ def test_water_air_shock_tube_matches_reference():
                 rtol=1e-12, atol=1e-8,
                 err_msg=f"Field {key} differs from reference"
             )
+
+
+def test_water_air_shock_tube_hllc_runs():
+    """Run an analogous water-air shock tube case using HLLC flux."""
+    from intsharp.config import load_config
+    from intsharp.runner import run_simulation
+
+    config = load_config(CONFIG_PATH)
+    config.physics.flux_calculator = "hllc"
+    config.time.n_steps = 800
+    config.output.monitors = []
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config.output.directory = tmpdir
+        fields = run_simulation(config)
+
+    rho = fields["rho"].values
+    p = fields["p"].values
+    alpha = fields["alpha"].values
+    assert np.all(np.isfinite(rho))
+    assert np.all(np.isfinite(p))
+    assert np.all(np.isfinite(alpha))
+    assert np.all(rho > 0.0)
+    assert np.all(p > 0.0)
+    assert np.all((alpha >= 0.0) & (alpha <= 1.0))

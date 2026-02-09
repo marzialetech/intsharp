@@ -28,9 +28,9 @@
                 <div class="window-header"><span class="window-title">Unit Tests</span></div>
                 <div class="window-body">
                     <h2>Euler Tests</h2>
-                    <p>1D compressible Euler (single-phase and two-phase) with AUSM+UP flux, stiffened-gas EOS, optional MUSCL/Barth-Jespersen reconstruction.</p>
+                    <p>1D compressible Euler (single-phase and two-phase) with selectable FV (AUSM+UP/HLLC) and DG (P1/P2/P3 with HLLE), stiffened-gas EOS, optional MUSCL/Barth-Jespersen reconstruction, and configurable convergence studies.</p>
                     <ul>
-                        <li><a href="unit_tests/sod_shock_tube_1d.html">sod_shock_tube_1d</a> — 1D Sod shock tube: ideal gas Riemann problem, t=0.2, rarefaction/contact/shock (has regression test)</li>
+                        <li><a href="unit_tests/sod_shock_tube_1d.html">sod_shock_tube_1d</a> — 1D Sod shock tube: ideal gas Riemann problem with FV and DG (P1/P2/P3), plus analytical-reference convergence figures</li>
                         <li><a href="unit_tests/water_air_shock_tube_1d.html">water_air_shock_tube_1d</a> — Two-phase water-air 5-equation model, Wood's formula, v_riem flux splitting (has regression test)</li>
                     </ul>
 
