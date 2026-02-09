@@ -193,10 +193,19 @@ velocity: [0.5, 0.0]   # 2D: (u, v) advection velocity</code></pre>
                     <h3 id="solver">Solver</h3>
                     <pre><code>solver:
   type: upwind    # First-order upwind advection</code></pre>
+                    <p>For compressible runs, use:</p>
+                    <pre><code>physics:
+  mode: euler
+  euler_spatial_discretization: fv   # fv or dg
+  flux_calculator: ausm_plus_up      # ausm_plus_up or hllc (fv)
+  dg_order: 1                        # if dg: 1, 2, or 3
+solver:
+  type: upwind   # ignored in euler mode (kept for backward compatibility)</code></pre>
 
                     <h3>Timestepper</h3>
                     <pre><code>timestepper:
   type: euler     # or rk4</code></pre>
+                    <p>For DG Euler, use <code>rk4</code> or the DG-recommended SSP-RK3 option when provided by the unit-test configuration.</p>
 
                     <h3 id="sharpening">Sharpening (Optional)</h3>
                     <pre><code>sharpening:

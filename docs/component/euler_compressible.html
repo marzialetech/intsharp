@@ -27,7 +27,7 @@
                 <div class="window-header"><span class="window-title">compressible Euler</span></div>
                 <div class="window-body">
                     <p><a href="../components.html">&larr; Components</a></p>
-                    <div class="file-path">intsharp/solvers/euler_1d.py, euler_5eq_1d.py | intsharp/flux_ausm.py | intsharp/eos.py | intsharp/limiters.py</div>
+                    <div class="file-path">intsharp/solvers/euler_1d.py, euler_5eq_1d.py, euler_dg_1d.py | intsharp/flux_ausm.py, flux_hllc.py | intsharp/eos.py, exact_riemann_1d.py | intsharp/limiters.py</div>
 
                     <nav class="page-toc" aria-label="Page contents">
                         <strong>Contents</strong>
@@ -36,23 +36,26 @@
                             <li><a href="#pde-system">PDE System</a></li>
                             <li><a href="#eos">Equation of State</a></li>
                             <li><a href="#decoding">Decoding (Conserved → Primitive)</a></li>
-                            <li><a href="#flux">Flux Calculation (AUSM+UP)</a></li>
+                            <li><a href="#flux">Flux Calculation (AUSM+UP / HLLC / HLLE)</a></li>
+                            <li><a href="#dg">DG Formulation (P1/P2/P3)</a></li>
                             <li><a href="#limiter">Slope Limiter (MUSCL + Barth–Jespersen)</a></li>
                             <li><a href="#time-integration">Time Integration</a></li>
                             <li><a href="#boundary-conditions">Boundary Conditions</a></li>
                             <li><a href="#two-phase">Two-Phase Extensions</a></li>
+                            <li><a href="#convergence">Analytical Convergence Mode</a></li>
                             <li><a href="#implementation">Implementation & File Locations</a></li>
                             <li><a href="#references">References</a></li>
                         </ul>
                     </nav>
 
                     <h2 id="overview">Overview</h2>
-                    <p>The compressible Euler solver implements finite-volume schemes for inviscid compressible flow in 1D. Two formulations are supported:</p>
+                    <p>The compressible Euler solver implements inviscid compressible-flow schemes in 1D with both finite-volume (FV) and discontinuous Galerkin (DG) discretizations.</p>
                     <ul>
-                        <li><strong>Single-phase (3 equations):</strong> Mass, momentum, energy conservation for a single fluid.</li>
-                        <li><strong>Two-phase (5 equations):</strong> Allaire–Clerc–Kokh / Kapila et al. model with pressure equilibrium, tracking partial densities, mixture momentum/energy, and volume fraction.</li>
+                        <li><strong>FV single-phase (3 equations):</strong> Mass, momentum, and energy conservation for a single fluid.</li>
+                        <li><strong>FV two-phase (5 equations):</strong> Allaire–Clerc–Kokh / Kapila et al. model with pressure equilibrium, tracking partial densities, mixture momentum/energy, and volume fraction.</li>
+                        <li><strong>DG single-phase (3 equations):</strong> Element-local polynomial solution (P1/P2/P3) with interface Riemann fluxes and positivity-preserving controls.</li>
                     </ul>
-                    <p>Both use the <strong>stiffened gas</strong> equation of state, <strong>AUSM+UP</strong> flux splitting, optional <strong>MUSCL</strong> reconstruction with Barth–Jespersen limiting, and explicit forward Euler time integration.</p>
+                    <p>All variants use the <strong>stiffened gas</strong> equation of state. FV supports <strong>AUSM+UP</strong> and <strong>HLLC</strong> (with two-phase v<sub>riem</sub> form), while DG currently uses <strong>HLLE</strong>. FV supports optional <strong>MUSCL</strong> reconstruction with Barth–Jespersen limiting. DG supports polynomial orders P1/P2/P3 and SSP-RK3 time stepping.</p>
 
                     <h2 id="pde-system">PDE System</h2>
 
@@ -151,8 +154,8 @@ c = \sqrt{\frac{1}{\rho\left(\frac{\alpha_1}{\rho_1 c_1^2} + \frac{\alpha_2}{\rh
 \]</div>
                     <p>Pure phases: \(c \to c_1\) when \(\alpha_1 \approx 1\), \(c \to c_2\) when \(\alpha_1 \approx 0\).</p>
 
-                    <h2 id="flux">Flux Calculation (AUSM+UP)</h2>
-                    <p>Liou (2006). Interface flux at \(i{+}1/2\) between left (L) and right (R) states.</p>
+                    <h2 id="flux">Flux Calculation (AUSM+UP / HLLC / HLLE)</h2>
+                    <p>The FV solver provides modular interface fluxes. AUSM+UP (below) is the default all-speed split form for single-phase and two-phase FV; HLLC is also available for robust shock/contact capturing in FV; DG uses HLLE in the current 1D implementation.</p>
 
                     <h3>1. Interface sound speed</h3>
                     <div class="math-block">\[
@@ -207,6 +210,18 @@ p_{1/2} = P_5^+(M_L)\,p_L + P_5^-(M_R)\,p_R + p_u
 \mathbf{F} = \dot{m}\begin{bmatrix} 1 \\ u_{\text{upwind}} \\ H_{\text{upwind}} \end{bmatrix} + \begin{bmatrix} 0 \\ p_{1/2} \\ 0 \end{bmatrix}
 \]</div>
                     <p>\(H = (E + p)/\rho\).</p>
+                    <p><strong>HLLC/HLLE note:</strong> HLL-family methods estimate left/right wave speeds and construct a conservative face flux from wave-fan states. HLLC restores the contact wave (sharper contacts); HLLE is more dissipative but robust and is used by the current DG module.</p>
+
+                    <h2 id="dg">DG Formulation (P1/P2/P3)</h2>
+                    <p>The 1D DG solver evolves element-local polynomial coefficients for the single-phase Euler equations using interface Riemann fluxes and SSP-RK3 time integration. For polynomial order \(p\), each conserved variable has \(p+1\) local degrees of freedom.</p>
+                    <div class="math-block">\[
+\vec{q}_h(x,t)\big|_{K_e}=\sum_{j=0}^{p}\vec{Q}_{e,j}(t)\,\ell_j(\xi), \quad \xi\in[-1,1]
+\]</div>
+                    <div class="math-block">\[
+M_e\frac{d\vec{Q}_e}{dt}
+=\vec{R}^{\mathrm{vol}}_e(\vec{Q}_e)+\vec{R}^{\mathrm{surf}}_e(\vec{Q}_{e-1},\vec{Q}_{e},\vec{Q}_{e+1})
+\]</div>
+                    <p>P1, P2, and P3 are supported via YAML configuration. Positivity safeguards are applied to keep \(\rho>0\) and \(p>0\) in shock-dominated regions.</p>
 
                     <h2 id="limiter">Slope Limiter (MUSCL + Barth–Jespersen)</h2>
                     <p>Optional second-order reconstruction. Cell-centered \(q_i\) with ghost cells.</p>
@@ -270,6 +285,9 @@ F_{\alpha_1} \mathrel{+}= K_\alpha\,(u_L - u_R)\,\bar{\alpha}(1 - \bar{\alpha}),
                     <h3>4. Post-step α normalization</h3>
                     <p>After each step: \(\alpha_1 \leftarrow (\alpha_1\rho_1) / \rho\) to enforce consistency with partial densities and \(\alpha_1 + \alpha_2 = 1\).</p>
 
+                    <h2 id="convergence">Analytical Convergence Mode</h2>
+                    <p>The Sod setup supports analytical-reference convergence studies through dedicated YAML configuration. The workflow runs multiple resolutions and compares numerical density against the exact Riemann solution, reporting and plotting \(L_1\) errors on log-log axes for FV and DG variants (e.g., FV, DG-P1, DG-P2, DG-P3).</p>
+
                     <h2 id="implementation">Implementation & File Locations</h2>
                     <table>
                         <thead>
@@ -277,9 +295,12 @@ F_{\alpha_1} \mathrel{+}= K_\alpha\,(u_L - u_R)\,\bar{\alpha}(1 - \bar{\alpha}),
                         </thead>
                         <tbody>
                             <tr><td>Single-phase 1D solver</td><td><code>intsharp/solvers/euler_1d.py</code></td><td><code>euler_step_1d</code>, <code>EulerState1D</code></td></tr>
+                            <tr><td>Single-phase 1D DG solver</td><td><code>intsharp/solvers/euler_dg_1d.py</code></td><td><code>euler_dg_step_1d</code>, DG reconstruction/evolution utilities</td></tr>
                             <tr><td>5-equation two-phase solver</td><td><code>intsharp/solvers/euler_5eq_1d.py</code></td><td><code>euler_step_5eq_1d</code>, <code>FiveEqState1D</code></td></tr>
                             <tr><td>AUSM+UP flux</td><td><code>intsharp/flux_ausm.py</code></td><td><code>ausm_plus_up_flux_1d</code>, <code>ausm_plus_up_flux_1d_with_v_riem</code></td></tr>
+                            <tr><td>HLLC/HLLE flux</td><td><code>intsharp/flux_hllc.py</code></td><td><code>hllc_flux_1d</code>, <code>hlle_flux_1d</code></td></tr>
                             <tr><td>Stiffened gas EOS</td><td><code>intsharp/eos.py</code></td><td><code>sound_speed</code>, <code>pressure_from_energy</code>, <code>enthalpy</code></td></tr>
+                            <tr><td>Exact Sod reference</td><td><code>intsharp/exact_riemann_1d.py</code></td><td>Exact 1D Riemann solution helpers for convergence/plot overlays</td></tr>
                             <tr><td>Wood's mixture sound speed</td><td><code>intsharp/eos.py</code></td><td><code>mixture_sound_speed_wood</code></td></tr>
                             <tr><td>MUSCL + Barth–Jespersen</td><td><code>intsharp/limiters.py</code></td><td><code>muscl_reconstruct_1d</code>, <code>barth_jespersen_1d</code></td></tr>
                         </tbody>
@@ -288,6 +309,7 @@ F_{\alpha_1} \mathrel{+}= K_\alpha\,(u_L - u_R)\,\bar{\alpha}(1 - \bar{\alpha}),
                     <h2 id="references">References</h2>
                     <ul>
                         <li>Liou, M.S. (2006). A sequel to AUSM, Part II: AUSM+-up for all speeds. <em>J. Comput. Phys.</em> 214, 137–170.</li>
+                        <li>Toro, E.F. (2009). <em>Riemann Solvers and Numerical Methods for Fluid Dynamics</em>. Springer.</li>
                         <li>Allaire, G., Clerc, S., Kokh, S. (2002). A five-equation model for the simulation of interfaces between compressible fluids. <em>J. Comput. Phys.</em> 181, 577–616.</li>
                         <li>Kapila et al. (2001). Two-phase modeling of deflagration-to-detonation transition in granular materials.</li>
                     </ul>
