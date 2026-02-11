@@ -1,0 +1,88 @@
+# 2D Rayleigh-Taylor Instability (compressible two-phase 5eq, FV)
+#
+# Heavy fluid over light fluid with a perturbed interface and gravity.
+# This is a smoke/regression setup intended to validate:
+# - 2D two-phase Euler execution path
+# - optional gravity source via physics.gravity.enabled
+# - directional BCs (x periodic, y reflective)
+
+domain:
+  x_min: 0.0
+  x_max: 1.0
+  n_points_x: 96
+  y_min: 0.0
+  y_max: 1.0
+  n_points_y: 192
+
+time:
+  dt: 1.0e-4
+  n_steps: 6000
+
+physics:
+  mode: euler
+
+  # Phase 1: heavy fluid
+  phase1:
+    name: heavy
+    gamma: 1.4
+    p_infinity: 0.0
+    rho_ref: 2.0
+
+  # Phase 2: light fluid
+  phase2:
+    name: light
+    gamma: 1.4
+    p_infinity: 0.0
+    rho_ref: 1.0
+
+  two_phase_model: 5eq
+  euler_spatial_discretization: fv
+  flux_calculator: hllc
+  use_muscl: false
+
+  # Directional BCs for 2D Euler
+  euler_bc_x: periodic
+  euler_bc_y: reflective
+
+  # Modular gravity source (toggle enabled true/false)
+  gravity:
+    enabled: true
+    gx: 0.0
+    gy: -400.0
+
+  # RTI initial condition
+  euler_initial_conditions:
+    type: rti
+    interface_y0: 0.5
+    alpha1_top: 1.0
+    alpha1_bottom: 0.0
+    perturbation_amplitude: 0.02
+    perturbation_mode_x: 1
+    interface_thickness: 0.003
+    p0: 4.0e2
+    u0: 0.0
+    v0: 0.0
+
+output:
+  directory: ./unit_tests/rayleigh_taylor_2d
+  monitors:
+    - type: console
+
+    - type: gif
+      field: alpha
+      every_n_steps: 315
+      style: contour
+      contour_levels: [0.5]
+      contour_color: white
+      background_color: "#2563eb"
+
+    - type: gif
+      field: rho
+      every_n_steps: 315
+      style: pcolormesh
+      vmin: 0.9
+      vmax: 2.1
+
+    - type: txt
+      fields: [rho, u, v, p, alpha]
+      every_n_steps: 100

@@ -27,7 +27,7 @@
                 <div class="window-header"><span class="window-title">compressible Euler</span></div>
                 <div class="window-body">
                     <p><a href="../components.html">&larr; Components</a></p>
-                    <div class="file-path">intsharp/solvers/euler_1d.py, euler_5eq_1d.py, euler_dg_1d.py | intsharp/flux_ausm.py, flux_hllc.py | intsharp/eos.py, exact_riemann_1d.py | intsharp/limiters.py</div>
+                    <div class="file-path">intsharp/solvers/euler_1d.py, euler_5eq_1d.py, euler_5eq_2d.py, euler_dg_1d.py | intsharp/flux_ausm.py, flux_hllc.py | intsharp/eos.py, exact_riemann_1d.py | intsharp/limiters.py</div>
 
                     <nav class="page-toc" aria-label="Page contents">
                         <strong>Contents</strong>
@@ -49,10 +49,11 @@
                     </nav>
 
                     <h2 id="overview">Overview</h2>
-                    <p>The compressible Euler solver implements inviscid compressible-flow schemes in 1D with both finite-volume (FV) and discontinuous Galerkin (DG) discretizations.</p>
+                    <p>The compressible Euler solver implements inviscid compressible-flow schemes in 1D and 2D with finite-volume (FV), plus a 1D discontinuous Galerkin (DG) path.</p>
                     <ul>
                         <li><strong>FV single-phase (3 equations):</strong> Mass, momentum, and energy conservation for a single fluid.</li>
                         <li><strong>FV two-phase (5 equations):</strong> Allaire–Clerc–Kokh / Kapila et al. model with pressure equilibrium, tracking partial densities, mixture momentum/energy, and volume fraction.</li>
+                        <li><strong>FV two-phase 2D RTI:</strong> Directionally split 2D extension of the 5-equation model with modular x/y boundary conditions and optional gravity source term.</li>
                         <li><strong>DG single-phase (3 equations):</strong> Element-local polynomial solution (P1/P2/P3) with interface Riemann fluxes and positivity-preserving controls.</li>
                     </ul>
                     <p>All variants use the <strong>stiffened gas</strong> equation of state. FV supports <strong>AUSM+UP</strong> and <strong>HLLC</strong> (with two-phase v<sub>riem</sub> form), while DG currently uses <strong>HLLE</strong>. FV supports optional <strong>MUSCL</strong> reconstruction with Barth–Jespersen limiting. DG supports polynomial orders P1/P2/P3 and SSP-RK3 time stepping.</p>
@@ -260,6 +261,7 @@ q_{R,i+1/2} = q_{i+1} - \tfrac{1}{2}\,\phi_{i+1}\,\Delta q_{i+1}
                         <li><strong>Reflective:</strong> Mirror state with reversed velocity (\(u \to -u\)).</li>
                         <li><strong>Periodic:</strong> Wrap around (left ghost = right interior, right ghost = left interior).</li>
                     </ul>
+                    <p>In 2D two-phase runs, set boundary conditions per direction with <code>physics.euler_bc_x</code> and <code>physics.euler_bc_y</code>.</p>
 
                     <h2 id="two-phase">Two-Phase Extensions</h2>
 
@@ -285,6 +287,12 @@ F_{\alpha_1} \mathrel{+}= K_\alpha\,(u_L - u_R)\,\bar{\alpha}(1 - \bar{\alpha}),
 
                     <h3>4. Post-step α normalization</h3>
                     <p>After each step: \(\alpha_1 \leftarrow (\alpha_1\rho_1) / \rho\) to enforce consistency with partial densities and \(\alpha_1 + \alpha_2 = 1\).</p>
+                    <p>In 2D RTI mode, optional constant gravity is applied as an explicit source after split flux updates:</p>
+                    <div class="math-block">\[
+\partial_t (\rho u) = \cdots + \rho g_x,\qquad
+\partial_t (\rho v) = \cdots + \rho g_y,\qquad
+\partial_t E = \cdots + \rho (g_x u + g_y v)
+\]</div>
 
                     <h2 id="convergence">Analytical Convergence Mode</h2>
                     <p>The Sod setup supports analytical-reference convergence studies through dedicated YAML configuration. The workflow runs multiple resolutions and compares numerical density against the exact Riemann solution, reporting and plotting \(L_1\) errors on log-log axes for FV and DG variants (e.g., FV, DG-P1, DG-P2, DG-P3).</p>
@@ -297,7 +305,8 @@ F_{\alpha_1} \mathrel{+}= K_\alpha\,(u_L - u_R)\,\bar{\alpha}(1 - \bar{\alpha}),
                         <tbody>
                             <tr><td>Single-phase 1D solver</td><td><code>intsharp/solvers/euler_1d.py</code></td><td><code>euler_step_1d</code>, <code>EulerState1D</code></td></tr>
                             <tr><td>Single-phase 1D DG solver</td><td><code>intsharp/solvers/euler_dg_1d.py</code></td><td><code>euler_dg_step_1d</code>, DG reconstruction/evolution utilities</td></tr>
-                            <tr><td>5-equation two-phase solver</td><td><code>intsharp/solvers/euler_5eq_1d.py</code></td><td><code>euler_step_5eq_1d</code>, <code>FiveEqState1D</code></td></tr>
+                            <tr><td>5-equation two-phase 1D solver</td><td><code>intsharp/solvers/euler_5eq_1d.py</code></td><td><code>euler_step_5eq_1d</code>, <code>FiveEqState1D</code></td></tr>
+                            <tr><td>5-equation two-phase 2D solver</td><td><code>intsharp/solvers/euler_5eq_2d.py</code></td><td><code>euler_step_5eq_2d</code>, <code>FiveEqState2D</code>, <code>create_initial_state_rti_5eq_2d</code></td></tr>
                             <tr><td>AUSM+UP flux</td><td><code>intsharp/flux_ausm.py</code></td><td><code>ausm_plus_up_flux_1d</code>, <code>ausm_plus_up_flux_1d_with_v_riem</code></td></tr>
                             <tr><td>HLLC/HLLE flux</td><td><code>intsharp/flux_hllc.py</code></td><td><code>hllc_flux_1d</code>, <code>hlle_flux_1d</code></td></tr>
                             <tr><td>Stiffened gas EOS</td><td><code>intsharp/eos.py</code></td><td><code>sound_speed</code>, <code>pressure_from_energy</code>, <code>enthalpy</code></td></tr>
@@ -314,7 +323,7 @@ F_{\alpha_1} \mathrel{+}= K_\alpha\,(u_L - u_R)\,\bar{\alpha}(1 - \bar{\alpha}),
                         <li>Allaire, G., Clerc, S., Kokh, S. (2002). A five-equation model for the simulation of interfaces between compressible fluids. <em>J. Comput. Phys.</em> 181, 577–616.</li>
                         <li>Kapila et al. (2001). Two-phase modeling of deflagration-to-detonation transition in granular materials.</li>
                     </ul>
-                    <p>Validation: <a href="../unit_tests/sod_shock_tube_1d.html">sod_shock_tube_1d</a>, <a href="../unit_tests/water_air_shock_tube_1d.html">water_air_shock_tube_1d</a>.</p>
+                    <p>Validation: <a href="../unit_tests/sod_shock_tube_1d.html">sod_shock_tube_1d</a>, <a href="../unit_tests/water_air_shock_tube_1d.html">water_air_shock_tube_1d</a>, <a href="../unit_tests/rayleigh_taylor_2d.html">rayleigh_taylor_2d</a>, <a href="../unit_tests/rayleigh_taylor_2d_2026-02-09_14:16:18.html">rayleigh_taylor_2d_2026-02-09_14:16:18</a>.</p>
                 </div>
             </div>
         </main>

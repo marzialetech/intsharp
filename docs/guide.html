@@ -90,7 +90,7 @@
                     <p>intsharp supports two physics modes:</p>
                     <ul>
                         <li><strong>advection_only</strong> (default): Scalar advection with optional interface sharpening</li>
-                        <li><strong>euler</strong>: Compressible Euler equations (1D single-phase or two-phase)</li>
+                        <li><strong>euler</strong>: Compressible Euler equations (1D single-phase/two-phase, plus 2D two-phase RTI in FV)</li>
                     </ul>
                     <p>For <strong>Euler mode</strong>, use <code>physics.mode: euler</code> and configure material(s) and initial conditions. Single-phase example:</p>
                     <pre><code>physics:
@@ -105,7 +105,23 @@
     right: {rho: 0.125, u: 0.0, p: 0.1}
   euler_bc: transmissive
   use_muscl: false   # or true for MUSCL + Barth-Jespersen</code></pre>
-                    <p>Two-phase (water-air) uses <code>phase1</code>/<code>phase2</code> and <code>two_phase_model: 5eq</code>. See <a href="unit_tests/sod_shock_tube_1d.html">sod_shock_tube_1d</a> for a single-phase example.</p>
+                    <p>Two-phase (water-air) uses <code>phase1</code>/<code>phase2</code> and <code>two_phase_model: 5eq</code>. 2D RTI uses directional BCs (<code>euler_bc_x</code>, <code>euler_bc_y</code>) and optional gravity (<code>physics.gravity</code>). See <a href="unit_tests/rayleigh_taylor_2d.html">rayleigh_taylor_2d</a> for a full 2D example and <a href="unit_tests/rayleigh_taylor_2d_2026-02-09_14:16:18.html">rayleigh_taylor_2d_2026-02-09_14:16:18</a> for the approved archived reference run.</p>
+                    <pre><code>physics:
+  mode: euler
+  phase1: {gamma: 1.4, p_infinity: 0.0, rho_ref: 2.0}
+  phase2: {gamma: 1.4, p_infinity: 0.0, rho_ref: 1.0}
+  two_phase_model: 5eq
+  euler_spatial_discretization: fv
+  euler_bc_x: periodic
+  euler_bc_y: reflective
+  gravity: {enabled: true, gx: 0.0, gy: -9.81}
+  euler_initial_conditions:
+    type: rti
+    interface_y0: 0.5
+    alpha1_top: 1.0
+    alpha1_bottom: 0.0
+    perturbation_amplitude: 0.01
+    perturbation_mode_x: 1</code></pre>
 
                     <h3 id="domain-1d">Domain (1D)</h3>
                     <p>1D domains are <strong>cell-centered</strong>: <code>dx = L/n_points</code>, with grid points at cell centers. This allows CFL = 1 to give exact return after one revolution (no phase drift).</p>

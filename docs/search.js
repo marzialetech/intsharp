@@ -5,7 +5,7 @@ const searchIndex = [
     { title: 'Installation', url: 'install.html', keywords: 'install setup pip requirements dependencies python' },
     { title: 'Running Simulations', url: 'guide.html', keywords: 'run simulation yaml config example tutorial guide per-field sharpening contour compare' },
     { title: 'Components', url: 'components.html', keywords: 'components solver upwind timestepper euler rk4 ssp rk3 ssp_rk3 sharpening pm cl boundary periodic neumann dirichlet monitor console png pdf svg gif mp4 hdf5 txt curve compare compare_fields dg p1 p2 p3 hllc hlle ausm_plus_up convergence riemann' },
-    { title: 'Unit Tests', url: 'unit-tests.html', keywords: 'unit test validation tanh tanh_circle 2d sharpening gif txt curve output circle radial revolution compare per-field' },
+    { title: 'Unit Tests', url: 'unit-tests.html', keywords: 'unit test validation tanh tanh_circle 2d sharpening gif txt curve output circle radial revolution compare per-field rayleigh taylor rti archived approved 2026-02-09' },
 ];
 
 const contentIndex = {
@@ -13,7 +13,7 @@ const contentIndex = {
     'install.html': 'install installation clone git pip requirements numpy matplotlib scipy pydantic pyyaml tqdm h5py imageio python virtual environment venv',
     'guide.html': 'running simulation yaml config configuration domain time velocity fields initial condition image png initial_condition_image boundary solver timestepper sharpening output monitors tanh hat advection revolution unit test validation example 2d circle per-field sharpening gif mp4 svg compare compare_fields euler_spatial_discretization flux_calculator dg_order euler mode ssp rk3 ssp_rk3',
     'components.html': 'upwind advection solver euler rk4 ssp rk3 ssp_rk3 runge kutta timestepper pm parameswaran mandal cl chiu lin sharpening periodic neumann dirichlet boundary condition console progress png pdf svg vector image gif mp4 video animation hdf5 data txt text curve output monitor gradient divergence cfl courant 1d 2d meshgrid pcolormesh contour compare compare_fields dg p1 p2 p3 fv hllc hlle ausm_plus_up exact riemann convergence',
-    'unit-tests.html': 'unit test validation tanh compare tanh_hat 10_rev tanh_circle 2d circle radial revolution periodic domain cell-centered cfl gif compare compare_fields per-field 1d sod euler dg p1 p2 p3 hllc convergence'
+    'unit-tests.html': 'unit test validation tanh compare tanh_hat 10_rev tanh_circle 2d circle radial revolution periodic domain cell-centered cfl gif compare compare_fields per-field 1d sod euler dg p1 p2 p3 hllc convergence rayleigh taylor rti archived approved 2026-02-09 14:16:18'
 };
 
 document.addEventListener('DOMContentLoaded', function() {
