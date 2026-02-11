@@ -32,8 +32,7 @@
                     <ul>
                         <li><a href="unit_tests/sod_shock_tube_1d.html">sod_shock_tube_1d</a> — 1D Sod shock tube: ideal gas Riemann problem with FV and DG (P1/P2/P3), plus analytical-reference convergence figures</li>
                         <li><a href="unit_tests/water_air_shock_tube_1d.html">water_air_shock_tube_1d</a> — Two-phase water-air 5-equation model, Wood's formula, v_riem flux splitting (has regression test)</li>
-                        <li><a href="unit_tests/rayleigh_taylor_2d.html">rayleigh_taylor_2d</a> — 2D two-phase 5-equation FV Rayleigh–Taylor setup with optional gravity source and directional BCs</li>
-                        <li><a href="unit_tests/rayleigh_taylor_2d_2026-02-09_14:16:18.html">rayleigh_taylor_2d_2026-02-09_14:16:18</a> — Approved archived RTI reference run (alpha/rho GIFs + YAML) from <code>unit_tests/rayleigh_taylor_2d_2026-02-09_14:16:18</code></li>
+                        <li><a href="unit_tests/rayleigh_taylor_2d_2026-02-09_14:16:18.html">rayleigh_taylor_2d</a> — 2D two-phase 5-equation FV Rayleigh–Taylor setup with gravity source</li>
                     </ul>
 
                     <h2>Comparison Tests</h2>
@@ -53,7 +52,6 @@
                     <pre><code># From the repo root:
 python run.py unit_tests/sod_shock_tube_1d.yaml
 python run.py unit_tests/water_air_shock_tube_1d.yaml
-python run.py unit_tests/rayleigh_taylor_2d.yaml
 python run.py unit_tests/rayleigh_taylor_2d_2026-02-09_14:16:18/rayleigh_taylor_2d.yaml
 python run.py unit_tests/tanh_hat_10_rev_compare.yaml
 python run.py unit_tests/tanh_circle_10_rev_compare.yaml
