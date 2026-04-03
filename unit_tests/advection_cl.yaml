@@ -1,0 +1,56 @@
+# Linear advection test: CL sharpening vs no-sharpening baseline.
+# Sharp IC (eps_initial = 4*dx), goal: keep eps_char ≈ eps_target during advection.
+# 10 full revolutions at CFL = 0.5.
+
+domain:
+  x_min: -0.05
+  x_max: 0.05
+  n_points: 2000
+
+time:
+  dt: 2.5e-5
+  n_steps: 40000
+
+velocity:
+  type: constant
+  value: [1.0]
+
+fields:
+  - name: alpha_no_sharp
+    initial_condition: "0.5 * (tanh((0.025 + x) / 4e-4) + tanh((0.025 - x) / 4e-4))"
+    boundary: { type: periodic }
+    sharpening: false
+
+  - name: alpha_cl
+    initial_condition: "0.5 * (tanh((0.025 + x) / 4e-4) + tanh((0.025 - x) / 4e-4))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: cl
+
+solver:
+  type: upwind
+
+sharpening:
+  enabled: false
+  method: cl
+  eps_target: 2.0e-4
+  strength: 7.4989
+  n_substeps: 10
+
+output:
+  monitors:
+    - type: console
+
+    - type: metrics
+      every_n_steps: 100
+      interface_radius: 0.025
+      advection_velocity: 1.0
+      fields:
+        - alpha_no_sharp
+        - alpha_cl
+
+    - type: gif
+      every_n_steps: 500
+      compare_fields:
+        - { field: alpha_no_sharp, color: black, linestyle: "--" }
+        - { field: alpha_cl,       color: blue,  linestyle: "-"  }

@@ -1,0 +1,143 @@
+# Unified 1D benchmark: 11 interface sharpening methods + no-sharpening baseline.
+# Fair-comparison point derived from 25x25 (eps, Gamma) parameter sweep
+# with STRICT quality criteria (bounded + stable + mass_drift<0.05 + tc<=6):
+#   eps_target = 4.6416e-05, strength = 7.4989 (n_substeps=10)
+# PM-CAL removed (redundant with PM). CLS 2015 removed (mass gain >120% everywhere).
+#
+# Tanh-hat IC, 100 points, dx=0.01, CFL=0.5, 10 revolutions (2000 steps).
+
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points: 100
+
+time:
+  dt: 0.01
+  n_steps: 2000
+
+velocity:
+  type: constant
+  value: [0.5]
+
+fields:
+  - name: alpha_no_sharp
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary: { type: periodic }
+    sharpening: false
+
+  - name: alpha_pm_cal
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: pm_cal
+
+  - name: alpha_cl
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: cl
+
+  - name: alpha_olsson_kreiss
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: olsson_kreiss
+
+  - name: alpha_acls
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: acls
+
+  - name: alpha_cls_2010
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: cls_2010
+
+  - name: alpha_lcls_2012
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: lcls_2012
+
+  - name: alpha_lcls_2014
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: lcls_2014
+
+  - name: alpha_cls_2017
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: cls_2017
+
+  - name: alpha_scls
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: scls
+
+  - name: alpha_lpm
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: lpm
+
+  - name: alpha_cfo
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: cfo
+
+solver:
+  type: upwind
+
+sharpening:
+  enabled: false
+  method: pm_cal
+  eps_target: 4.6416e-05
+  strength: 7.4989
+  n_substeps: 10
+  method_params:
+    mapping_alpha: 2
+    mapping_gamma: 2
+    scls_alpha: 0.001
+    scls_beta: 1000
+
+output:
+  monitors:
+    - type: console
+
+    - type: txt
+      every_n_steps: 20
+      fields:
+        - alpha_no_sharp
+        - alpha_pm_cal
+        - alpha_cl
+        - alpha_olsson_kreiss
+        - alpha_acls
+        - alpha_cls_2010
+        - alpha_lcls_2012
+        - alpha_lcls_2014
+        - alpha_cls_2017
+        - alpha_scls
+        - alpha_lpm
+        - alpha_cfo
+
+    - type: gif
+      every_n_steps: 20
+      compare_fields:
+        - { field: alpha_no_sharp,     color: black,   linestyle: "-"  }
+        - { field: alpha_pm_cal,       color: red,     linestyle: "-"  }
+        - { field: alpha_cl,           color: blue,    linestyle: "-"  }
+        - { field: alpha_olsson_kreiss,color: green,   linestyle: "--" }
+        - { field: alpha_acls,         color: orange,  linestyle: "--" }
+        - { field: alpha_cls_2010,     color: purple,  linestyle: "--" }
+        - { field: alpha_lcls_2012,    color: cyan,    linestyle: ":"  }
+        - { field: alpha_lcls_2014,    color: magenta, linestyle: ":"  }
+        - { field: alpha_cls_2017,     color: olive,   linestyle: "-." }
+        - { field: alpha_scls,         color: teal,    linestyle: "-." }
+        - { field: alpha_lpm,          color: deeppink, linestyle: "-" }
+        - { field: alpha_cfo,          color: gold,    linestyle: "-"  }

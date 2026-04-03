@@ -1,0 +1,120 @@
+# SIDI: all 9 successful methods + no-sharpening baseline.
+# Metrics monitor records eps_char, delta_2, delta_inf every step.
+
+domain:
+  x_min: -0.05
+  x_max: 0.05
+  n_points: 2000
+
+time:
+  dt: 5.0e-5
+  n_steps: 10000
+
+velocity:
+  type: constant
+  value: [0.0]
+
+fields:
+  - name: alpha_no_sharp
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: false
+
+  - name: alpha_pm_cal
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: pm_cal
+
+  - name: alpha_cl
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: cl
+
+  - name: alpha_ok
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: olsson_kreiss
+
+  - name: alpha_acls
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: acls
+
+  - name: alpha_cls2010
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: cls_2010
+
+  - name: alpha_lcls2012
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: lcls_2012
+
+  - name: alpha_lcls2014
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: lcls_2014
+
+  - name: alpha_cls2017
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: cls_2017
+
+  - name: alpha_lpm
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: lpm
+
+solver:
+  type: upwind
+
+sharpening:
+  enabled: false
+  method: pm_cal
+  eps_target: 2.0e-4
+  strength: 7.4989
+  n_substeps: 10
+  convergence_tol: 1.0e-6
+  convergence_n_consecutive: 10
+
+output:
+  monitors:
+    - type: console
+
+    - type: metrics
+      every_n_steps: 5
+      interface_radius: 0.025
+      fields:
+        - alpha_no_sharp
+        - alpha_pm_cal
+        - alpha_cl
+        - alpha_ok
+        - alpha_acls
+        - alpha_cls2010
+        - alpha_lcls2012
+        - alpha_lcls2014
+        - alpha_cls2017
+        - alpha_lpm
+
+    - type: gif
+      every_n_steps: 50
+      compare_fields:
+        - { field: alpha_no_sharp, color: black,    linestyle: "--" }
+        - { field: alpha_pm_cal,   color: red,      linestyle: "-"  }
+        - { field: alpha_cl,       color: blue,     linestyle: "-"  }
+        - { field: alpha_ok,       color: green,    linestyle: "-"  }
+        - { field: alpha_acls,     color: orange,   linestyle: "--" }
+        - { field: alpha_cls2010,  color: purple,   linestyle: "-"  }
+        - { field: alpha_lcls2012, color: cyan,     linestyle: "--" }
+        - { field: alpha_lcls2014, color: magenta,  linestyle: "-"  }
+        - { field: alpha_cls2017,  color: brown,    linestyle: "--" }
+        - { field: alpha_lpm,      color: olive,    linestyle: "-"  }

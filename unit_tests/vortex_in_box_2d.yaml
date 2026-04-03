@@ -1,0 +1,67 @@
+# 2D Rider--Kothe vortex-in-a-box: no sharpening vs LPM.
+# Smooth tanh circle IC, time-reversing single vortex, period T=2.
+# At t=T the field should return to its initial state.
+
+domain:
+  x_min: 0.0
+  x_max: 1.0
+  n_points_x: 300
+  y_min: 0.0
+  y_max: 1.0
+  n_points_y: 300
+
+time:
+  dt: 0.0025
+  n_steps: 800
+
+velocity:
+  type: expression
+  u: "-sin(pi*x)**2 * sin(2*pi*y) * cos(pi*t/2.0)"
+  v: "sin(2*pi*x) * sin(pi*y)**2 * cos(pi*t/2.0)"
+
+fields:
+  - name: alpha_no_sharp
+    initial_condition: "0.5*(1.0 + tanh((0.15 - sqrt((x - 0.5)**2 + (y - 0.75)**2)) / (2.0*0.01)))"
+    boundary:
+      type: periodic
+    sharpening: false
+
+  - name: alpha_lpm
+    initial_condition: "0.5*(1.0 + tanh((0.15 - sqrt((x - 0.5)**2 + (y - 0.75)**2)) / (2.0*0.01)))"
+    boundary:
+      type: periodic
+    sharpening: true
+    sharpening_method: lpm
+
+solver:
+  type: upwind
+
+sharpening:
+  enabled: false
+  eps_target: 0.01
+  strength: 1.0
+  n_substeps: 3
+
+output:
+  monitors:
+    - type: console
+
+    - type: gif
+      every_n_steps: 5
+      compare_fields:
+        - field: alpha_no_sharp
+          contour_levels: [0.5]
+          color: black
+          linestyle: "-"
+        - field: alpha_lpm
+          contour_levels: [0.5]
+          color: darkgreen
+          linestyle: "-"
+
+    - type: gif
+      every_n_steps: 5
+      field: alpha_no_sharp
+
+    - type: gif
+      every_n_steps: 5
+      field: alpha_lpm

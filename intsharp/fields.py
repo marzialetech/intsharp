@@ -53,6 +53,36 @@ SAFE_NAMESPACE: dict[str, Any] = {
 }
 
 
+def _zalesak_disk(
+    x: NDArray[np.float64],
+    y: NDArray[np.float64],
+    cx: float = 0.5,
+    cy: float = 0.75,
+    R: float = 0.15,
+    slot_w: float = 0.05,
+    slot_top: float = 0.85,
+    eps: float = 0.02,
+) -> NDArray[np.float64]:
+    """Smooth (tanh) slotted-disk field for the Zalesak benchmark.
+
+    Returns alpha in [0, 1]: ~1 inside the disk (minus the slot), ~0 outside.
+    All sharp edges are replaced by tanh transitions of half-width *eps*.
+    """
+    d = np.sqrt((x - cx) ** 2 + (y - cy) ** 2)
+    circle = 0.5 * (1.0 + np.tanh((R - d) / (2.0 * eps)))
+
+    hw = slot_w / 2.0
+    slot_left  = 0.5 * (1.0 + np.tanh((x - (cx - hw)) / (2.0 * eps)))
+    slot_right = 0.5 * (1.0 + np.tanh(((cx + hw) - x) / (2.0 * eps)))
+    slot_cap   = 0.5 * (1.0 + np.tanh((slot_top - y) / (2.0 * eps)))
+    slot = slot_left * slot_right * slot_cap
+
+    return circle * (1.0 - slot)
+
+
+SAFE_NAMESPACE["zalesak_disk"] = _zalesak_disk
+
+
 def evaluate_expression_1d(
     expr: str,
     x: NDArray[np.float64],

@@ -1,0 +1,67 @@
+# 2D Zalesak slotted-disk benchmark: no sharpening vs LPM.
+# Smooth (tanh) IC, solid-body rotation about (0.5, 0.5), 1 full revolution.
+# 300x300 grid chosen for clear LPM vs diffusion contrast.
+
+domain:
+  x_min: 0.0
+  x_max: 1.0
+  n_points_x: 300
+  y_min: 0.0
+  y_max: 1.0
+  n_points_y: 300
+
+time:
+  dt: 0.001
+  n_steps: 1000
+
+velocity:
+  type: expression
+  u: "-(y - 0.5) * 2 * pi"
+  v: "(x - 0.5) * 2 * pi"
+
+fields:
+  - name: alpha_no_sharp
+    initial_condition: "zalesak_disk(x, y, eps=0.005)"
+    boundary:
+      type: periodic
+    sharpening: false
+
+  - name: alpha_lpm
+    initial_condition: "zalesak_disk(x, y, eps=0.005)"
+    boundary:
+      type: periodic
+    sharpening: true
+    sharpening_method: lpm
+
+solver:
+  type: upwind
+
+sharpening:
+  enabled: false
+  eps_target: 0.007
+  strength: 2.0
+  n_substeps: 10
+
+output:
+  monitors:
+    - type: console
+
+    - type: gif
+      every_n_steps: 10
+      compare_fields:
+        - field: alpha_no_sharp
+          contour_levels: [0.5]
+          color: black
+          linestyle: "-"
+        - field: alpha_lpm
+          contour_levels: [0.5]
+          color: darkgreen
+          linestyle: "-"
+
+    - type: gif
+      every_n_steps: 10
+      field: alpha_no_sharp
+
+    - type: gif
+      every_n_steps: 10
+      field: alpha_lpm

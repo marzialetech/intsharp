@@ -16,5 +16,20 @@ __pycache__/
 # Draft / unpublished unit tests (move to unit_tests/ when ready)
 drafts/
 
+# Timestamped run-output directories
+unit_tests/*_*/
+
+# Paper drafts and supporting material (kept local)
+paper/
+paper_v2/
+
+# Research artifacts (kept local)
+lean/
+literature/
+notebooks/
+proposals/
+results/
+scripts/
+
 # Local standalone postdoc abstract artifacts
 postdoc_abstract_fsi_dg_fv_mpm*

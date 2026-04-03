@@ -1,0 +1,130 @@
+# SIDI (Static Initially Diffuse Interface): no advection, sharpening only.
+# Compares PM-CAL, CL, OK, ACLS, CLS-2010, LCLS-2012 against a no-sharpening baseline.
+#
+# Geometry (paper Sec. 3.1.1): r in [-0.05, 0.05]; h = 5e-5 (grid spacing);
+# ε0 = 50 h = 2.5e-3 scales the initial transition; R = 0.025 is the α = 0.5 shell radius.
+# IC: α = 0.5 * ( tanh((R+x)/(2ε0)) + tanh((R-x)/(2ε0)) ).
+#
+# Convergence: ||α^{n+1} − α^n||∞ < 1e-6 for 10 consecutive steps.
+# n_steps is a safety cap; simulation stops early when all methods converge.
+
+domain:
+  x_min: -0.05
+  x_max: 0.05
+  n_points: 2000
+
+time:
+  dt: 5.0e-5
+  n_steps: 10000
+
+velocity:
+  type: constant
+  value: [0.0]
+
+fields:
+  - name: alpha_no_sharp
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: false
+
+  - name: alpha_pm_cal
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: pm_cal
+
+  - name: alpha_cl
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: cl
+
+  - name: alpha_ok
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: olsson_kreiss
+
+  - name: alpha_acls
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: acls
+
+  - name: alpha_cls2010
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: cls_2010
+
+  - name: alpha_lcls2012
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: lcls_2012
+
+solver:
+  type: upwind
+
+sharpening:
+  enabled: false
+  method: pm_cal
+  eps_target: 5.0e-5
+  strength: 7.4989
+  n_substeps: 10
+  convergence_tol: 1.0e-6
+  convergence_n_consecutive: 10
+
+output:
+  monitors:
+    - type: console
+
+    - type: gif
+      every_n_steps: 10
+      compare_fields:
+        - { field: alpha_no_sharp, color: black,   linestyle: "--" }
+        - { field: alpha_pm_cal,   color: red,     linestyle: "-"  }
+        - { field: alpha_cl,       color: blue,    linestyle: "-"  }
+        - { field: alpha_ok,       color: green,   linestyle: "-"  }
+        - { field: alpha_acls,     color: orange,  linestyle: "--" }
+        - { field: alpha_cls2010,  color: purple,  linestyle: "-"  }
+        - { field: alpha_lcls2012, color: cyan,    linestyle: "--" }
+
+    - type: gif
+      every_n_steps: 10
+      field: alpha_no_sharp
+
+    - type: gif
+      every_n_steps: 10
+      field: alpha_pm_cal
+
+    - type: gif
+      every_n_steps: 10
+      field: alpha_cl
+
+    - type: gif
+      every_n_steps: 10
+      field: alpha_ok
+
+    - type: gif
+      every_n_steps: 10
+      field: alpha_acls
+
+    - type: gif
+      every_n_steps: 10
+      field: alpha_cls2010
+
+    - type: gif
+      every_n_steps: 10
+      field: alpha_lcls2012
+
+    - type: txt
+      every_n_steps: 9999
+      fields:
+        - alpha_no_sharp
+        - alpha_pm_cal
+        - alpha_cl
+        - alpha_ok
+        - alpha_acls
+        - alpha_cls2010
+        - alpha_lcls2012

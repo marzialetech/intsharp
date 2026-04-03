@@ -1,0 +1,54 @@
+# SIDI single-method test: no-sharpening baseline vs ONE method.
+# Swap sharpening_method on alpha_test to test different methods.
+# CFO trial: eps_target = 4*dx (dx = 0.1/2000 = 5e-5 → 2e-4).
+
+domain:
+  x_min: -0.05
+  x_max: 0.05
+  n_points: 2000
+
+time:
+  dt: 5.0e-5
+  n_steps: 10000
+
+velocity:
+  type: constant
+  value: [0.0]
+
+fields:
+  - name: alpha_no_sharp
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: false
+
+  - name: alpha_test
+    initial_condition: "0.5 * (tanh((0.025 + x) / 0.005) + tanh((0.025 - x) / 0.005))"
+    boundary: { type: periodic }
+    sharpening: true
+    sharpening_method: cfo
+
+solver:
+  type: upwind
+
+sharpening:
+  enabled: false
+  method: pm_cal
+  eps_target: 2.0e-4
+  strength: 7.4989
+  n_substeps: 10
+  convergence_tol: 1.0e-6
+  convergence_n_consecutive: 10
+
+output:
+  monitors:
+    - type: console
+
+    - type: gif
+      every_n_steps: 10
+      compare_fields:
+        - { field: alpha_no_sharp, color: black, linestyle: "--" }
+        - { field: alpha_test,     color: red,   linestyle: "-"  }
+
+    - type: gif
+      every_n_steps: 10
+      field: alpha_test

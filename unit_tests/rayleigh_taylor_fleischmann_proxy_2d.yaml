@@ -1,0 +1,95 @@
+# RTI proxy to closely mimic Fleischmann et al. (Computers & Fluids 189, 2019)
+# using the current intsharp 2D two-phase FV framework.
+#
+# Targeted similarities:
+# - domain: [0, 0.25] x [0, 1]
+# - interface: y = 0.5 (flat)
+# - density stratification: rho_lower=2, rho_upper=1
+# - gamma = 5/3
+# - gravity magnitude 1 directed toward lighter fluid (upward here: gy=+1)
+# - vertical velocity perturbation: v = -0.025 c cos(8*pi*x)
+#
+# Known differences from the paper setup:
+# - two-phase 5eq FV proxy instead of their single-phase Euler/TENO-WENO context
+# - boundary options limited to reflective/transmissive/periodic
+
+domain:
+  x_min: 0.0
+  x_max: 0.25
+  n_points_x: 160
+  y_min: 0.0
+  y_max: 1.0
+  n_points_y: 640
+
+time:
+  dt: 5.0e-5
+  n_steps: 40000   # t_final = 2.0 (paper-like horizon, practical runtime)
+
+physics:
+  mode: euler
+
+  # Lower heavy gas (phase1), upper light gas (phase2)
+  phase1:
+    name: heavy_gas
+    gamma: 1.6666666666666667   # 5/3
+    p_infinity: 0.0
+    rho_ref: 2.0
+
+  phase2:
+    name: light_gas
+    gamma: 1.6666666666666667   # 5/3
+    p_infinity: 0.0
+    rho_ref: 1.0
+
+  two_phase_model: 5eq
+  euler_spatial_discretization: fv
+  flux_calculator: hllc
+  use_muscl: false
+
+  # Symmetry-like left/right and open-ish top/bottom proxy
+  euler_bc_x: reflective
+  euler_bc_y: transmissive
+
+  gravity:
+    enabled: true
+    gx: 0.0
+    gy: 1.0
+
+  euler_initial_conditions:
+    type: rti
+    interface_y0: 0.5
+    alpha1_top: 0.0
+    alpha1_bottom: 1.0
+    perturbation_amplitude: 0.0
+    perturbation_mode_x: 1
+    interface_thickness: 0.0
+    p0: 2.0
+    u0: 0.0
+    v0: 0.0
+    v_perturbation_amplitude: -0.025
+    v_perturbation_mode_x: 1
+    v_perturbation_scale_with_sound_speed: true
+
+output:
+  directory: ./unit_tests/rayleigh_taylor_fleischmann_proxy_2d
+  monitors:
+    - type: console
+
+    - type: gif
+      field: rho
+      every_n_steps: 2000  # 20 frames over 2.0
+      style: pcolormesh
+      vmin: 0.85
+      vmax: 2.25
+
+    - type: gif
+      field: alpha
+      every_n_steps: 2000
+      style: contour
+      contour_levels: [0.5]
+      contour_color: white
+      background_color: "#2563eb"
+
+    - type: txt
+      fields: [rho, u, v, p, alpha]
+      every_n_steps: 8000

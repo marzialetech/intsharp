@@ -65,6 +65,8 @@ class GIFMonitor(Monitor):
         background_color: str | None = None,
         show_colorbar: bool | None = None,
         show_annotations: bool | None = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
         output_format: str = "gif",
         fps: int = 10,
         quiver_overlay_x: str | None = None,
@@ -83,6 +85,8 @@ class GIFMonitor(Monitor):
         self.background_color = background_color
         self.show_colorbar = show_colorbar if show_colorbar is not None else True
         self.show_annotations = show_annotations if show_annotations is not None else True
+        self.vmin = vmin
+        self.vmax = vmax
         self.output_format = output_format.lower()
         self.fps = fps
         self.quiver_overlay_x = quiver_overlay_x
@@ -253,13 +257,15 @@ class GIFMonitor(Monitor):
                     )
                 else:
                     # Use computed global bounds for consistent coloring across frames
+                    color_vmin = self.vmin if self.vmin is not None else y_min
+                    color_vmax = self.vmax if self.vmax is not None else y_max
                     pcm = ax.pcolormesh(
                         self._domain_X,
                         self._domain_Y,
                         values,
                         cmap=self.colormap,
-                        vmin=y_min,
-                        vmax=y_max,
+                        vmin=color_vmin,
+                        vmax=color_vmax,
                         shading="auto",
                     )
                     if self.show_colorbar:

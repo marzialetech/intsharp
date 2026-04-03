@@ -1,7 +1,11 @@
-# 1D comparison of ALL interface sharpening methods over 10 revolutions.
+# 1D comparison of interface sharpening methods over 10 revolutions.
 # Each field uses the same tanh-hat IC but a different sharpening method.
 # Per-field sharpening_method selects the RHS term; global sharpening
-# section provides shared parameters (eps_target, strength, method_params).
+# section provides shared parameters.
+#
+# Tuned parameters: eps_target=1e-4 (near-zero physical diffusion, limited
+# by Rusanov numerical dissipation), strength=5, n_substeps=10 for
+# stability and convergence.  CLS_2015 excluded (oscillates).
 
 domain:
   x_min: -0.5
@@ -72,13 +76,6 @@ fields:
     sharpening: true
     sharpening_method: lcls_2014
 
-  - name: alpha_cls_2015
-    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
-    boundary:
-      type: periodic
-    sharpening: true
-    sharpening_method: cls_2015
-
   - name: alpha_cls_2017
     initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
     boundary:
@@ -99,8 +96,9 @@ solver:
 sharpening:
   enabled: false
   method: pm
-  eps_target: 0.02
-  strength: 1.0
+  eps_target: 0.0001
+  strength: 5.0
+  n_substeps: 10
   method_params:
     mapping_alpha: 2
     mapping_gamma: 2
@@ -139,9 +137,6 @@ output:
         - field: alpha_lcls_2014
           color: magenta
           linestyle: ":"
-        - field: alpha_cls_2015
-          color: brown
-          linestyle: ":"
         - field: alpha_cls_2017
           color: olive
           linestyle: "-."
@@ -174,9 +169,6 @@ output:
     - type: gif
       every_n_steps: 20
       field: alpha_lcls_2014
-    - type: gif
-      every_n_steps: 20
-      field: alpha_cls_2015
     - type: gif
       every_n_steps: 20
       field: alpha_cls_2017

@@ -191,14 +191,28 @@ class SharpeningConfig(BaseModel):
         "olsson_kreiss", "acls", "cls_2010",
         "lcls_2012", "lcls_2014",
         "cls_2015", "cls_2017", "scls",
+        "vcac", "glcls",
+        "lpm", "cfo",
     ] = Field("cl", description="Sharpening method")
     eps_target: float = Field(
         ..., gt=0, description="Target interface thickness"
     )
     strength: float = Field(1.0, gt=0, description="Sharpening strength (Gamma)")
+    n_substeps: int = Field(
+        1, ge=1,
+        description="Number of sharpening sub-iterations per advection step"
+    )
     method_params: Optional[dict[str, Any]] = Field(
         None,
         description="Method-specific parameters (e.g., mapping_alpha, mapping_gamma, scls_alpha, scls_beta)"
+    )
+    convergence_tol: Optional[float] = Field(
+        None, gt=0,
+        description="If set, stop sharpening a field when ||alpha^{n+1}-alpha^n||_inf < tol for convergence_n_consecutive steps"
+    )
+    convergence_n_consecutive: int = Field(
+        10, ge=1,
+        description="Number of consecutive steps below convergence_tol required to declare convergence"
     )
 
 
@@ -458,7 +472,7 @@ class CompareFieldConfig(BaseModel):
 
 class MonitorConfig(BaseModel):
     """Output monitor configuration."""
-    type: Literal["console", "png", "pdf", "svg", "gif", "mp4", "hdf5", "txt", "curve"] = Field(
+    type: Literal["console", "png", "pdf", "svg", "gif", "mp4", "hdf5", "txt", "curve", "metrics"] = Field(
         ..., description="Monitor type"
     )
     every_n_steps: Optional[int] = Field(
@@ -528,6 +542,25 @@ class MonitorConfig(BaseModel):
     )
     quiver_skip: Optional[int] = Field(
         None, gt=0, description="Plot every Nth quiver arrow for clarity (default 4)"
+    )
+    # Metrics monitor options
+    interface_radius: Optional[float] = Field(
+        None, gt=0,
+        description="R — radius of the α=0.5 contour for ε_char measurement (metrics monitor)"
+    )
+    metrics_eps_target: Optional[float] = Field(
+        None, gt=0,
+        description="ε_target for ε_char/ε_target ratio column (metrics monitor). "
+                    "Falls back to sharpening.eps_target if not set."
+    )
+    advection_velocity: Optional[float] = Field(
+        None,
+        description="Constant advection velocity for periodic shift-back before metrics "
+                    "(rolls field so hat center returns to origin). Required for advection tests."
+    )
+    initial_center: Optional[float] = Field(
+        None,
+        description="Initial x-position of the hat center (default 0.0, used with advection_velocity)."
     )
 
     @model_validator(mode="after")

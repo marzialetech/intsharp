@@ -33,8 +33,9 @@
                     <p>RHS for the volume fraction \( \alpha \) (divergence of a normal-aligned flux):</p>
                     <div class="math-block">\[ \text{RHS} = \nabla \cdot \bigl[\epsilon (\nabla\alpha \cdot \mathbf{n})\mathbf{n} - \alpha(1-\alpha)\mathbf{n}\bigr] \]</div>
                     <p>The normal \( \mathbf{n} = \nabla\alpha_0/|\nabla\alpha_0| \) is frozen at the start of each sub-step. In 2D this yields anisotropic (normal-only) diffusion, unlike the isotropic Chiu-Lin form.</p>
-                    <p>Update:</p>
-                    <div class="math-block">\[ \alpha^{n+1} = \alpha^n + \Delta t \cdot \Gamma \cdot \text{RHS} \]</div>
+                    <p>Update (1D): same pseudo-timestep as <code>cl</code> — \( \theta = \texttt{CFL\_SAFETY}\, \Delta x^2 / \epsilon \); the YAML <code>time.dt</code> is not used. This avoids explicit-diffusion instability when \( \epsilon \sim \Delta x \) and \( \Delta t \sim \Delta x \).</p>
+                    <div class="math-block">\[ \alpha^{n+1} = \alpha^n + \Gamma \cdot \theta \cdot \text{RHS} \]</div>
+                    <p>Update (2D): \( \alpha^{n+1} = \alpha^n + \Delta t \cdot \Gamma \cdot \text{RHS} \) (per sub-step).</p>
                     <p><strong>Parameters:</strong></p>
                     <ul>
                         <li><code>eps_target</code>: Target interface thickness \( \epsilon \)</li>

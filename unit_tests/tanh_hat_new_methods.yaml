@@ -1,0 +1,103 @@
+# 1D comparison: new AI-proposed methods (VCAC, GLCLS) vs PM and CL.
+# Periodic box function, 10 revolutions.
+
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points: 100
+
+time:
+  dt: 0.01
+  n_steps: 2000
+
+velocity:
+  type: constant
+  value: [0.5]
+
+fields:
+  - name: alpha_no_sharp
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary:
+      type: periodic
+    sharpening: false
+
+  - name: alpha_pm
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary:
+      type: periodic
+    sharpening: true
+    sharpening_method: pm
+
+  - name: alpha_cl
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary:
+      type: periodic
+    sharpening: true
+    sharpening_method: cl
+
+  - name: alpha_vcac
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary:
+      type: periodic
+    sharpening: true
+    sharpening_method: vcac
+
+  - name: alpha_glcls
+    initial_condition: "0.5 * (tanh((0.1 + x) / 0.02) + tanh((0.1 - x) / 0.02))"
+    boundary:
+      type: periodic
+    sharpening: true
+    sharpening_method: glcls
+
+solver:
+  type: upwind
+
+sharpening:
+  enabled: false
+  method: pm
+  eps_target: 0.0001
+  strength: 5.0
+  n_substeps: 10
+  method_params:
+    glcls_delta: 0.1
+
+output:
+  monitors:
+    - type: console
+
+    # Overlay comparison
+    - type: gif
+      every_n_steps: 20
+      compare_fields:
+        - field: alpha_no_sharp
+          color: black
+          linestyle: "-"
+        - field: alpha_pm
+          color: red
+          linestyle: "-"
+        - field: alpha_cl
+          color: blue
+          linestyle: "-"
+        - field: alpha_vcac
+          color: darkgreen
+          linestyle: "--"
+        - field: alpha_glcls
+          color: darkorange
+          linestyle: "--"
+
+    # Individual GIFs
+    - type: gif
+      every_n_steps: 20
+      field: alpha_no_sharp
+    - type: gif
+      every_n_steps: 20
+      field: alpha_pm
+    - type: gif
+      every_n_steps: 20
+      field: alpha_cl
+    - type: gif
+      every_n_steps: 20
+      field: alpha_vcac
+    - type: gif
+      every_n_steps: 20
+      field: alpha_glcls

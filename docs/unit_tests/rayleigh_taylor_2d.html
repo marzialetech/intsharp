@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rayleigh_taylor_2d - intsharp</title>
+    <link href="https://fonts.cdnfonts.com/css/w95fa" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <div class="app">
+        <nav class="sidebar">
+            <div class="sidebar-header"><h1>intsharp</h1><span class="version">v1.0</span></div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search..." autocomplete="off"></div>
+            <ul class="nav-list" id="nav-list">
+                <li><a href="../index.html" data-page="home">Home</a></li>
+                <li><a href="../install.html" data-page="install">Installation</a></li>
+                <li><a href="../guide.html" data-page="guide">Running Simulations</a></li>
+                <li><a href="../components.html" data-page="components">Components</a></li>
+                <li><a href="../unit-tests.html" class="active" data-page="unit-tests">Unit Tests</a></li>
+            </ul>
+            <div class="sidebar-footer"><a href="https://github.com/marzialetech/intsharp" target="_blank">GitHub</a></div>
+        </nav>
+        <main class="content">
+            <div class="window">
+                <div class="window-header"><span class="window-title">rayleigh_taylor_2d</span></div>
+                <div class="window-body">
+                    <p><a href="../unit-tests.html">&larr; Unit Tests</a></p>
+                    <h2>Description</h2>
+                    <p>2D compressible two-phase Rayleigh&ndash;Taylor setup using the 5-equation FV solver with HLLC flux, optional gravity source, and directional boundary conditions. The case is configured as x-periodic and y-reflective, with a sinusoidally perturbed material interface.</p>
+                    <h3>How to run</h3>
+                    <pre><code>python run.py unit_tests/rayleigh_taylor_2d.yaml</code></pre>
+                    <h3>Config summary</h3>
+                    <ul>
+                        <li><strong>Domain:</strong> x &isin; [0, 1] (96 cells), y &isin; [0, 1] (192 cells)</li>
+                        <li><strong>Time:</strong> dt = 1e-4, 6000 steps (t_final = 0.6), ~20 GIF frames</li>
+                        <li><strong>Physics:</strong> euler mode, two_phase_model: 5eq, FV, HLLC flux</li>
+                        <li><strong>Phases:</strong> phase1 (rho_ref=2.0), phase2 (rho_ref=1.0), both ideal-gas (gamma=1.4)</li>
+                        <li><strong>IC:</strong> RTI interface at y=0.5 with cosine perturbation (amplitude 0.02)</li>
+                        <li><strong>Gravity:</strong> optional via <code>physics.gravity.enabled</code> (default on, gy=-400)</li>
+                        <li><strong>BCs:</strong> <code>euler_bc_x: periodic</code>, <code>euler_bc_y: reflective</code></li>
+                        <li><strong>Density colormap bounds:</strong> <code>vmin=0.9</code>, <code>vmax=2.1</code> (for clearer pcolormesh contrast)</li>
+                    </ul>
+                    <h3>Outputs</h3>
+                    <p>This case writes <code>alpha.gif</code>, <code>rho.gif</code>, and text snapshots under the run directory. The reference YAML is available at <a href="rayleigh_taylor_2d/rayleigh_taylor_2d.yaml">rayleigh_taylor_2d.yaml</a>.</p>
+                    <p><strong>Volume fraction (alpha)</strong></p>
+                    <p><img src="rayleigh_taylor_2d/alpha.gif" alt="alpha.gif" class="unit-test-output" style="max-width:100%; height:auto;"></p>
+                    <p><strong>Density (rho)</strong></p>
+                    <p><img src="rayleigh_taylor_2d/rho.gif" alt="rho.gif" class="unit-test-output" style="max-width:100%; height:auto;"></p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../search.js"></script>
+</body>
+</html>

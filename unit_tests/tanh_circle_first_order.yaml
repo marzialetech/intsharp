@@ -1,0 +1,101 @@
+# 2D comparison: first-order derived methods (LPM, CFO) vs PM and CL.
+# Circle advection, 10 revolutions with periodic BC.
+
+domain:
+  x_min: -0.5
+  x_max: 0.5
+  n_points_x: 100
+  y_min: -0.5
+  y_max: 0.5
+  n_points_y: 100
+
+time:
+  dt: 0.01
+  n_steps: 2000
+
+velocity:
+  type: constant
+  value: [0.5, 0.0]
+
+fields:
+  - name: alpha_no_sharp
+    initial_condition: "0.5 * (1 + tanh((0.15 - r) / 0.02))"
+    boundary:
+      type: periodic
+    sharpening: false
+
+  - name: alpha_pm
+    initial_condition: "0.5 * (1 + tanh((0.15 - r) / 0.02))"
+    boundary:
+      type: periodic
+    sharpening: true
+    sharpening_method: pm
+
+  - name: alpha_cl
+    initial_condition: "0.5 * (1 + tanh((0.15 - r) / 0.02))"
+    boundary:
+      type: periodic
+    sharpening: true
+    sharpening_method: cl
+
+  - name: alpha_lpm
+    initial_condition: "0.5 * (1 + tanh((0.15 - r) / 0.02))"
+    boundary:
+      type: periodic
+    sharpening: true
+    sharpening_method: lpm
+
+  - name: alpha_cfo
+    initial_condition: "0.5 * (1 + tanh((0.15 - r) / 0.02))"
+    boundary:
+      type: periodic
+    sharpening: true
+    sharpening_method: cfo
+
+solver:
+  type: upwind
+
+sharpening:
+  enabled: false
+  method: pm
+  eps_target: 0.002
+  strength: 2.0
+  n_substeps: 10
+
+output:
+  monitors:
+    - type: console
+
+    - type: gif
+      every_n_steps: 20
+      compare_fields:
+        - field: alpha_no_sharp
+          contour_levels: [0.5]
+          color: black
+          linestyle: "-"
+        - field: alpha_pm
+          contour_levels: [0.5]
+          color: red
+          linestyle: "-"
+        - field: alpha_cl
+          contour_levels: [0.5]
+          color: blue
+          linestyle: "-"
+        - field: alpha_lpm
+          contour_levels: [0.5]
+          color: darkgreen
+          linestyle: "--"
+        - field: alpha_cfo
+          contour_levels: [0.5]
+          color: darkorange
+          linestyle: "--"
+
+    - type: gif
+      every_n_steps: 20
+      field: alpha_lpm
+    - type: gif
+      every_n_steps: 20
+      field: alpha_cfo
+    - type: gif
+      every_n_steps: 20
+      field: alpha_pm

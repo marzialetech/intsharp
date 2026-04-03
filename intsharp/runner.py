@@ -145,6 +145,16 @@ def create_monitors(
             kwargs["fields"] = mon_cfg.fields
         elif mon_cfg.type == "hdf5":
             kwargs["fields"] = mon_cfg.fields
+        elif mon_cfg.type == "metrics":
+            kwargs["field"] = mon_cfg.field
+            kwargs["fields"] = mon_cfg.fields
+            kwargs["interface_radius"] = mon_cfg.interface_radius or 0.025
+            eps_t = mon_cfg.metrics_eps_target
+            if eps_t is None and config.sharpening is not None:
+                eps_t = config.sharpening.eps_target
+            kwargs["eps_target"] = eps_t
+            kwargs["advection_velocity"] = mon_cfg.advection_velocity
+            kwargs["initial_center"] = mon_cfg.initial_center or 0.0
 
         monitor_list.append(monitor_cls(**kwargs))
 
@@ -275,6 +285,52 @@ def run_advection_simulation(
     for monitor in monitor_list:
         monitor.on_step(0, t, fields, domain)
 
+    # Persist initial interface profiles for post-processing plots (dashed vs solid)
+    if ndim == 1:
+        try:
+            prof_dir = output_dir / "interface_profiles"
+            prof_dir.mkdir(parents=True, exist_ok=True)
+            x_prof = domain.x
+            for name in primary_field_names:
+                np.savetxt(
+                    prof_dir / f"{name}_initial.tsv",
+                    np.column_stack([x_prof, fields[name].values]),
+                    delimiter="\t",
+                    header="x\talpha",
+                    comments="",
+                )
+        except OSError:
+            pass
+
+    # Per-field convergence tracking for sharpening
+    conv_tol = (
+        config.sharpening.convergence_tol
+        if config.sharpening is not None
+        else None
+    )
+    conv_n = (
+        config.sharpening.convergence_n_consecutive
+        if config.sharpening is not None
+        else 10
+    )
+    _conv_consecutive: dict[str, int] = {}
+    _conv_done: set[str] = set()
+    _conv_time: dict[str, float] = {}  # simulation time when each field first met convergence criterion
+    _sharpening_field_names: set[str] = set()
+
+    if needs_sharpening and config.sharpening is not None:
+        for name in primary_field_names:
+            f = fields[name]
+            if f.sharpening_enabled is True:
+                do = True
+            elif f.sharpening_enabled is False:
+                do = False
+            else:
+                do = config.sharpening.enabled
+            if do:
+                _sharpening_field_names.add(name)
+                _conv_consecutive[name] = 0
+
     # Time loop
     for step in range(1, n_steps + 1):
         # Compute velocity for this step
@@ -329,25 +385,25 @@ def run_advection_simulation(
         # Sharpening post-step (only primary fields)
         if config.sharpening is not None and needs_sharpening:
             method_params = config.sharpening.method_params or {}
+            n_sub = config.sharpening.n_substeps
+            sub_strength = config.sharpening.strength / n_sub
             for name in primary_field_names:
+                if name not in _sharpening_field_names:
+                    continue
+                if name in _conv_done:
+                    continue
                 field = fields[name]
-                if field.sharpening_enabled is True:
-                    do_sharp = True
-                elif field.sharpening_enabled is False:
-                    do_sharp = False
-                else:
-                    do_sharp = config.sharpening.enabled
-
-                if do_sharp:
-                    method_name = field.sharpening_method or config.sharpening.method
-                    sharp_fn = _resolve_sharpening_fn(method_name)
+                old_values = field.values.copy()
+                method_name = field.sharpening_method or config.sharpening.method
+                sharp_fn = _resolve_sharpening_fn(method_name)
+                for _sub in range(n_sub):
                     if ndim == 1:
                         field.values = sharp_fn(
                             field.values,
                             dx,
                             dt,
                             config.sharpening.eps_target,
-                            config.sharpening.strength,
+                            sub_strength,
                             field.bc,
                             **method_params,
                         )
@@ -358,10 +414,29 @@ def run_advection_simulation(
                             dy,
                             dt,
                             config.sharpening.eps_target,
-                            config.sharpening.strength,
+                            sub_strength,
                             field.bc,
                             **method_params,
                         )
+
+                if conv_tol is not None:
+                    linf = float(np.max(np.abs(field.values - old_values)))
+                    if linf < conv_tol:
+                        _conv_consecutive[name] += 1
+                    else:
+                        _conv_consecutive[name] = 0
+                    if _conv_consecutive[name] >= conv_n:
+                        if name not in _conv_done:
+                            # Time after completing this step (same clock as monitor on_step)
+                            _conv_time[name] = t + dt
+                        _conv_done.add(name)
+
+        # Early stop: all sharpening fields converged
+        if conv_tol is not None and _sharpening_field_names and _conv_done == _sharpening_field_names:
+            t += dt
+            for monitor in monitor_list:
+                monitor.on_step(step, t, fields, domain)
+            break
 
         # Surface tension diagnostics (2D only)
         if ndim == 2 and config.surface_tension and config.surface_tension.enabled:
@@ -392,9 +467,37 @@ def run_advection_simulation(
         for monitor in monitor_list:
             monitor.on_step(step, t, fields, domain)
 
+    # Per-field convergence times for post-processing (t_f = time when stop rule first satisfied)
+    if conv_tol is not None and _sharpening_field_names:
+        for name in _sharpening_field_names:
+            if name not in _conv_time:
+                _conv_time[name] = t
+        ct_path = output_dir / "convergence_times.tsv"
+        with open(ct_path, "w") as f:
+            f.write("field\tt_f\n")
+            for name in sorted(_sharpening_field_names):
+                f.write(f"{name}\t{_conv_time[name]:.16e}\n")
+
     # Finalize monitors
     for monitor in monitor_list:
         monitor.on_end(fields, domain)
+
+    # Persist final interface profiles (same layout as initial)
+    if ndim == 1:
+        try:
+            prof_dir = output_dir / "interface_profiles"
+            prof_dir.mkdir(parents=True, exist_ok=True)
+            x_prof = domain.x
+            for name in primary_field_names:
+                np.savetxt(
+                    prof_dir / f"{name}_final.tsv",
+                    np.column_stack([x_prof, fields[name].values]),
+                    delimiter="\t",
+                    header="x\talpha",
+                    comments="",
+                )
+        except OSError:
+            pass
 
     return fields
 

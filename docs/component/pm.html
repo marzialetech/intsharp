@@ -33,6 +33,8 @@
                     <p>RHS for the volume fraction \( \alpha \):</p>
                     <div class="math-block">\[ \text{RHS} = -K \alpha(1-\alpha)(1-2\alpha) + \epsilon (1-2\alpha) |\nabla\alpha| \]</div>
                     <p>where \( K = 1/(4\epsilon^2) \).</p>
+                    <h3 id="pm-cal"><code>pm_cal</code> (calibrated PM)</h3>
+                    <p>Same structure, but the cubic term uses a fixed calibrated constant \( C_{\mathrm{PM}} \) instead of \( K(\varepsilon)=1/(4\varepsilon^2) \). <strong>CAL</strong> refers to this coefficient being set from a validated calibration (see code constant <code>C_PM_CALIBRATED</code> in <code>sharpening.py</code>). Use <code>sharpening_method: pm_cal</code> in YAML.</p>
                     <p>Update:</p>
                     <div class="math-block">\[ \alpha^{n+1} = \alpha^n + \Delta t \cdot \Gamma \cdot \text{RHS} \]</div>
                     <p><strong>Parameters:</strong></p>

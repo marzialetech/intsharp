@@ -1,5 +1,5 @@
 # IntSharp Makefile
-.PHONY: clean run install test
+.PHONY: clean run install test sweep plot propose lean-build
 
 # -------------------------------------------------------------------------
 # Simulation
@@ -16,6 +16,30 @@ install:
 # Run unit tests
 test:
 	pytest tests/ -v
+
+# -------------------------------------------------------------------------
+# Sharpening analysis
+# -------------------------------------------------------------------------
+
+# Mass parameter sweep (eps_target x strength) for all methods
+sweep:
+	python scripts/sharpening_sweep.py --workers 4 --n-eps 25 --n-str 25
+
+# Generate stability region heatmaps from sweep data
+plot:
+	python scripts/plot_stability_regions.py
+
+# Propose new sharpening terms via LLM (requires OPENAI_API_KEY)
+propose:
+	python scripts/propose_sharpening.py --n-proposals 1
+
+# -------------------------------------------------------------------------
+# Lean formalization
+# -------------------------------------------------------------------------
+
+# Build Lean project (fetch Mathlib + typecheck)
+lean-build:
+	cd lean && lake build
 
 # Clean build artifacts
 clean:

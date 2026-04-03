@@ -331,9 +331,56 @@ solver:
                                 <td>Curve format (x, y)</td>
                                 <td><code>field</code>, <code>every_n_steps</code> or <code>at_times</code></td>
                             </tr>
+                            <tr>
+                                <td><code>metrics</code></td>
+                                <td><code>metrics/*.tsv</code> per field (step, t, ε_char, ε_char/ε_target, δ*_2, δ*_∞)</td>
+                                <td><code>fields</code>, optional <code>interface_radius</code>, <code>metrics_eps_target</code>, <code>advection_velocity</code>, <code>initial_center</code></td>
+                            </tr>
                         </tbody>
                     </table>
+                    <p>Advection runs with per-field sharpening convergence (<code>convergence_tol</code> set) also write <code>convergence_times.tsv</code> in the run directory: one row per sharpening field with <code>t_f</code> = simulation time when that field first satisfies the stop rule.</p>
+                    <p>For <strong>1D advection</strong> runs, the runner also exports <code>interface_profiles/&lt;field&gt;_initial.tsv</code> and <code>interface_profiles/&lt;field&gt;_final.tsv</code> (columns <code>x</code>, <code>alpha</code>) at step 0 and at the end of the run, for plotting initial vs. final interface shapes.</p>
+
+                    <p><strong>Advection-aware metrics:</strong> When the hat profile crosses the periodic boundary during advection, set <code>advection_velocity</code> on the metrics monitor so that the field is <code>np.roll</code>-ed back to center before computing ε_char and shape errors:</p>
+                    <pre><code>- type: metrics
+  every_n_steps: 100
+  fields: [alpha_cl]
+  interface_radius: 0.025
+  advection_velocity: 1.0     # constant velocity for periodic shift-back
+  initial_center: 0.0         # optional, default 0.0</code></pre>
+
                     <p>See <a href="component/gif.html">gif</a> for details on single-field vs multi-field modes and 2D visualization options.</p>
+
+                    <h3 id="parameter-sweep">Parameter Sweep &amp; Stability Analysis</h3>
+
+                    <p>IntSharp includes tools for systematically evaluating sharpening methods across parameter space.</p>
+
+                    <h4>Running a sweep</h4>
+                    <pre><code># Full sweep (all 11 methods, 25x25 grid, n_substeps=[1,5,10])
+make sweep
+
+# Custom sweep
+python scripts/sharpening_sweep.py --workers 8 --n-eps 30 --n-str 30 \
+    --methods pm cl olsson_kreiss --substeps 1 10</code></pre>
+
+                    <p>Results are saved as CSV files in <code>results/sweep/&lt;method&gt;/sweep_nsub&lt;N&gt;.csv</code>.</p>
+
+                    <h4>Generating plots</h4>
+                    <pre><code>make plot</code></pre>
+
+                    <p>This produces three heatmaps per method per n_substeps value:</p>
+                    <ul>
+                        <li><strong>Stability map</strong> — green/red binary showing where the method is stable and bounded</li>
+                        <li><strong>Sharpness map</strong> — transition cell count (lower = sharper), masked where unstable</li>
+                        <li><strong>Conservation map</strong> — log<sub>10</sub>(mass drift), masked where unstable</li>
+                    </ul>
+                    <p>A summary grid PNG comparing all methods side-by-side is also generated.</p>
+
+                    <h4>Proposing new methods (LLM pipeline)</h4>
+                    <pre><code># Requires OPENAI_API_KEY environment variable
+make propose</code></pre>
+
+                    <p>See <a href="sharpening_grammar.md">sharpening_grammar.md</a> for the allowed building blocks.</p>
 
                 </div>
             </div>
